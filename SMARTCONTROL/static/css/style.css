@@ -20,33 +20,113 @@ body {
     background-color: inherit !important; 
 }
 
-/* --- SEÇÃO DE IMPRESSÃO CORRIGIDA E DEFINITIVA --- */
+/* ============================================
+   SEÇÃO DE IMPRESSÃO MELHORADA E DEFINITIVA
+   ============================================ */
 @media print {
-    /* 1. Esconde tudo que não está na área de impressão */
+    /* 1. Oculta TUDO exceto a área de impressão */
     body > *:not(#print-section) {
         display: none !important;
     }
 
-    /* 2. Garante que a secção de impressão e o seu conteúdo são visíveis */
-    #print-section, #print-section * {
+    /* 2. Garante visibilidade do conteúdo de impressão */
+    #print-section, 
+    #print-section * {
         visibility: visible !important;
     }
 
-    /* 3. Posiciona a secção de impressão para ocupar toda a folha */
+    /* 3. Posiciona para ocupar toda a página */
     #print-section {
         display: block !important;
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
+        margin: 0;
+        padding: 0;
     }
     
+    /* 4. Esconde elementos com classe no-print */
     .no-print {
         display: none !important;
     }
 
+    /* 5. Configurações da página */
     @page {
         size: A4;
-        margin: 10mm;
+        margin: 15mm;
+    }
+    
+    /* 6. Evita quebras de página indesejadas */
+    table, 
+    img, 
+    h1, 
+    h2, 
+    h3 {
+        page-break-inside: avoid;
+    }
+    
+    /* 7. Força quebra de página antes de elementos com classe page-break */
+    .page-break {
+        page-break-before: always;
+    }
+    
+    /* 8. Otimiza tabelas para impressão */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    
+    table thead {
+        display: table-header-group;
+    }
+    
+    table tbody tr {
+        page-break-inside: avoid;
+    }
+    
+    /* 9. Melhora contraste para impressão */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+    
+    /* 10. Remove sombras e efeitos desnecessários */
+    * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+    
+    /* 11. Otimiza imagens */
+    img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* 12. Garante fundo branco para melhor impressão */
+    body, 
+    #print-section {
+        background: white !important;
+    }
+    
+    /* 13. Ajusta links para impressão */
+    a {
+        text-decoration: underline;
+        color: #000 !important;
+    }
+    
+    /* 14. Previne viúvas e órfãs */
+    p, 
+    h2, 
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+    
+    /* 15. Melhora legibilidade de textos pequenos */
+    .text-xs, 
+    .text-sm {
+        font-size: 10pt !important;
     }
 }
