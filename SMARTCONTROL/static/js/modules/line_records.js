@@ -6,6 +6,8 @@ import { getReportHeader, printContent } from './reports.js';
 
 // Substitua a função printLineTerm em line_records.js por esta versão:
 
+// Substitua a função printLineTerm em line_records.js por esta versão:
+
 function printLineTerm(recordData) {
     const deliveryDate = recordData.data_entrega 
         ? new Date(recordData.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR') 
@@ -77,7 +79,48 @@ function printLineTerm(recordData) {
                     <li style="margin-bottom:8px;">A linha telefónica é de propriedade da empresa e destina-se exclusivamente ao uso profissional;</li>
                     <li style="margin-bottom:8px;">É de responsabilidade do funcionário zelar pelo SIM card e informar imediatamente em caso de perda, roubo ou dano;</li>
                     <li style="margin-bottom:8px;">O uso indevido ou excessivo da linha pode resultar em medidas disciplinares;</li>
-                    <li style="margin-bottom:8px;">Em caso de desligamento ou devolução, o SIM card deverá ser devolvido intacto;</li
+                    <li style="margin-bottom:8px;">Em caso de desligamento ou devolução, o SIM card deverá ser devolvido intacto;</li>
+                    <li style="margin-bottom:8px;">Custos com uso indevido ou perda do chip poderão ser descontados em folha de pagamento;</li>
+                    <li style="margin-bottom:8px;">A empresa reserva-se o direito de monitorar o uso da linha para fins de auditoria e segurança.</li>
+                </ol>
+            </div>
+            
+            <!-- Declaração -->
+            <div style="background:#fef3c7; border:2px solid #f59e0b; padding:16px; border-radius:8px; margin:24px 0;">
+                <p style="margin:0; font-size:11px; line-height:1.6; text-align:justify;">
+                    <strong>DECLARAÇÃO:</strong><br><br>
+                    Declaro que recebi o SIM card da linha telefónica acima identificada, em perfeitas condições,
+                    e que estou ciente de todas as responsabilidades e termos de uso estabelecidos neste documento.
+                    Comprometo-me a utilizar a linha exclusivamente para fins profissionais e a devolvê-la quando
+                    solicitado pela empresa ou ao término do vínculo empregatício.
+                </p>
+            </div>
+            
+            <!-- ASSINATURAS -->
+            <div style="margin-top:80px; display:flex; justify-content:space-around; text-align:center;">
+                <div style="width:40%;">
+                    <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                    <p style="font-weight:600; margin:4px 0;">${recordData.employeeName || 'N/A'}</p>
+                    <p style="font-size:10px; color:#666; margin:0;">Assinatura do Funcionário</p>
+                    <p style="font-size:9px; color:#999; margin:4px 0;">CPF: ________________</p>
+                </div>
+                <div style="width:40%;">
+                    <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                    <p style="font-weight:600; margin:4px 0;">${entregador}</p>
+                    <p style="font-size:10px; color:#666; margin:0;">Assinatura do Responsável</p>
+                    <p style="font-size:9px; color:#999; margin:4px 0;">Data: ${deliveryDate}</p>
+                </div>
+            </div>
+            
+            <!-- Rodapé -->
+            <div style="margin-top:60px; padding-top:16px; border-top:1px solid #ccc; text-align:center; font-size:10px; color:#666;">
+                <p style="margin:0;">Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
+                <p style="margin:4px 0;">Via única - Arquivo da empresa | Sistema SMARTCONTROL</p>
+            </div>
+        </div>
+    `;
+    printContent(content);
+}
 
 
 window.openLineTermForm = (lineId, lineNumber) => {
