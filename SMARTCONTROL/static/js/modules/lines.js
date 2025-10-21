@@ -1,8 +1,8 @@
 // --- MÓDULO DE LINHAS (LINES.JS) ---
 
 import { state, fetchAllData } from '../app.js';
-import { openModal, closeModal, showToast } from './ui.js';
-import { API_URL, formatDateForInput } from './api.js';
+import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
+import { API_URL } from './api.js';
 
 function renderLineTable(lineTableBody, noLinesMessage, linesToRender = state.lines) {
     if (!lineTableBody || !noLinesMessage) return;
@@ -254,3 +254,4 @@ export function initLinesModule() {
     }
 
 }
+
