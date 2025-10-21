@@ -1,6 +1,8 @@
 // --- MÓDULO DE FUNCIONÁRIOS (EMPLOYEES.JS) ---
+// (VERSÃO CORRIGIDA COM IMPORT CERTO)
 
 import { state, fetchAllData } from '../app.js';
+// CORREÇÃO: 'formatDateForInput' foi movido para a importação de 'ui.js'
 import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 import { API_URL } from './api.js';
 
@@ -69,14 +71,15 @@ async function showEmployeeHistory(employeeHistoryModal, matricula) {
             noHistoryMessage.classList.add('hidden');
             historyRecords.forEach(r => {
                 const statusClass = r.status === 'Devolvido' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
+                // CORREÇÃO DE DATA APLICADA AQUI
                 tbody.innerHTML += `
-    <tr class="border-b">
-        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
-        <td class="p-3">${formatDateForInput(r.deliveryDate)}</td>
-        <td class="p-3">${r.returnDate ? formatDateForInput(r.returnDate) : '---'}</td>
-        <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
-    </tr>`;
-                });
+                    <tr class="border-b">
+                        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
+                        <td class="p-3">${formatDateForInput(r.deliveryDate)}</td>
+                        <td class="p-3">${r.returnDate ? formatDateForInput(r.returnDate) : '---'}</td>
+                        <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
+                    </tr>`;
+            });
         }
     } catch (error) {
         tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-500">Falha ao carregar histórico.</td></tr>`;
@@ -244,8 +247,4 @@ export function initEmployeesModule() {
             }
         });
     }
-
 }
-
-
-
