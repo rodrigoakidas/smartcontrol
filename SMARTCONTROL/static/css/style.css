@@ -1,0 +1,52 @@
+body { 
+    font-family: 'Inter', sans-serif; 
+    background-color: #f3f4f6; 
+}
+
+.modal { 
+    transition: opacity 0.3s ease; 
+}
+
+.modal-content { 
+    transition: transform 0.3s ease; 
+}
+
+.disabled-module { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+} 
+
+.disabled-module:hover { 
+    background-color: inherit !important; 
+}
+
+/* --- SEÇÃO DE IMPRESSÃO CORRIGIDA E DEFINITIVA --- */
+@media print {
+    /* 1. Esconde tudo que não está na área de impressão */
+    body > *:not(#print-section) {
+        display: none !important;
+    }
+
+    /* 2. Garante que a secção de impressão e o seu conteúdo são visíveis */
+    #print-section, #print-section * {
+        visibility: visible !important;
+    }
+
+    /* 3. Posiciona a secção de impressão para ocupar toda a folha */
+    #print-section {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+}
