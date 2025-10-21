@@ -1,6 +1,8 @@
 // --- MÓDULO DE LINHAS (LINES.JS) ---
+// (VERSÃO CORRIGIDA COM IMPORT CERTO)
 
 import { state, fetchAllData } from '../app.js';
+// CORREÇÃO: 'formatDateForInput' foi movido para a importação de 'ui.js'
 import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 import { API_URL } from './api.js';
 
@@ -68,12 +70,13 @@ async function showLineHistory(lineHistoryModal, lineId) {
         if (historyData && historyData.length > 0) {
             noHistoryMsg.classList.add('hidden');
             historyData.forEach(h => {
-               tbody.innerHTML += `
-    <tr class="border-b">
-        <td class="p-3">${h.aparelho_imei}</td>
-        <td class="p-3">${formatDateForInput(h.data_vinculacao)}</td>
-        <td class="p-3">${h.data_desvinculacao ? formatDateForInput(h.data_desvinculacao) : 'Atualmente vinculado'}</td>
-    </tr>`;
+                // CORREÇÃO DE DATA APLICADA AQUI
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3">${h.aparelho_imei}</td>
+                        <td class="p-3">${formatDateForInput(h.data_vinculacao)}</td>
+                        <td class="p-3">${h.data_desvinculacao ? formatDateForInput(h.data_desvinculacao) : 'Atualmente vinculado'}</td>
+                    </tr>`;
             });
         } else {
             noHistoryMsg.classList.remove('hidden');
@@ -252,6 +255,4 @@ export function initLinesModule() {
             }
         });
     }
-
 }
-
