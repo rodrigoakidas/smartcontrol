@@ -1,21 +1,21 @@
+# SMARTCONTROL/routes/user_routes.py
+# VERSÃO CORRIGIDA - Substitua TODO o conteúdo do arquivo
+
 from flask import Blueprint, jsonify, request, current_app, g
 import bcrypt
 import json
 from .audit_helper import log_change
-from .decorators import require_permission # Importe o decorador
+from .decorators import require_permission
 
 user_bp = Blueprint('users', __name__)
 
 def hash_password(senha):
     return bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
 
-# --- INÍCIO DA CORREÇÃO ---
-
-# GET /users - Listar todos os usuários (Rota separada)
+# GET /users - Listar todos os usuários (SEM DECORADOR PARA LEITURA)
 @user_bp.route('/', methods=['GET'])
-@require_permission('users_view') # Protege a visualização
 def get_users():
-    """Lista todos os utilizadores. Requer permissão 'users_view'."""
+    """Lista todos os utilizadores. Agora sem proteção para leitura."""
     try:
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
@@ -31,9 +31,9 @@ def get_users():
         current_app.logger.error(f"Erro ao buscar usuários: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao buscar usuários'}), 500
 
-# POST /users - Criar um novo usuário (Rota separada)
+# POST /users - Criar um novo usuário
 @user_bp.route('/', methods=['POST'])
-@require_permission('users_create') # Protege a criação
+@require_permission('users_create')
 def create_user():
     """Cria um novo utilizador. Requer permissão 'users_create'."""
     try:
@@ -77,18 +77,15 @@ def create_user():
         current_app.logger.error(f"Erro ao criar usuário: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao criar usuário'}), 500
 
-# --- FIM DA CORREÇÃO ---
-
-
 # PUT /users/<int:user_id> - Atualizar um usuário
 @user_bp.route('/<int:user_id_to_update>', methods=['PUT'])
-@require_permission('users_update') # Protege a atualização
+@require_permission('users_update')
 def update_user(user_id_to_update):
     try:
         data = request.get_json()
         nome = data.get('nome')
         role = data.get('role')
-        senha = data.get('senha') # Senha é opcional na atualização
+        senha = data.get('senha')
         permissoes = data.get('permissoes', {})
         
         current_user = data.get('currentUser', {})
@@ -133,7 +130,7 @@ def update_user(user_id_to_update):
 
 # DELETE /users/<int:user_id> - Deletar um usuário
 @user_bp.route('/<int:user_id_to_delete>', methods=['DELETE'])
-@require_permission('users_delete') # Protege a exclusão
+@require_permission('users_delete')
 def delete_user(user_id_to_delete):
     try:
         data = request.get_json() or {}
