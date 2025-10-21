@@ -1,8 +1,8 @@
 // --- MÓDULO DE FUNCIONÁRIOS (EMPLOYEES.JS) ---
 
 import { state, fetchAllData } from '../app.js';
-import { openModal, closeModal, showToast } from './ui.js';
-import { API_URL, formatDateForInput } from './api.js';
+import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
+import { API_URL } from './api.js';
 
 function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToRender = state.employees) {
     employeeTableBody.innerHTML = '';
@@ -246,5 +246,6 @@ export function initEmployeesModule() {
     }
 
 }
+
 
 
