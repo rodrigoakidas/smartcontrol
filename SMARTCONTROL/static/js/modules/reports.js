@@ -31,88 +31,227 @@ export function printContent(htmlContent) {
     }
 }
 
-function generateReport(title, headers, dataRows, reportModal) {
+// Adicione estas funções melhoradas ao reports.js
+
+// Função base melhorada para gerar relatórios
+function generateReport(title, headers, dataRows, reportModal, subtitle = '') {
     const now = new Date();
-    const timestamp = `Gerado em: ${now.toLocaleDateString('pt-BR')} ${now.toLocaleTimeString('pt-BR')}`;
+    const timestamp = `${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR')}`;
+    
     const content = `
-        <div class="p-8 bg-white font-sans">
+        <div style="padding:24px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:11px; color:#000; max-width:1200px; margin:0 auto;">
             ${getReportHeader()}
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold">${title}</h2>
-                <p class="text-sm text-gray-500">${timestamp}</p>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:24px 0; padding-bottom:16px; border-bottom:2px solid #333;">
+                <div>
+                    <h2 style="font-size:20px; font-weight:700; margin:0 0 8px 0;">${title}</h2>
+                    ${subtitle ? `<p style="margin:0; color:#666; font-size:12px;">${subtitle}</p>` : ''}
+                </div>
+                <div style="text-align:right;">
+                    <p style="margin:0; font-size:10px; color:#666;">Gerado em:</p>
+                    <p style="margin:0; font-weight:600;">${timestamp}</p>
+                </div>
             </div>
-            <table class="w-full text-left border-collapse text-sm">
-                <thead><tr class="border-b-2 border-gray-400">${headers.map(h => `<th class="p-2 font-bold text-gray-700">${h}</th>`).join('')}</tr></thead>
-                <tbody>${dataRows.join('')}</tbody>
-            </table>
-        </div>`;
+            
+            ${dataRows.length === 0 ? `
+                <div style="background:#fef3c7; border:2px solid #f59e0b; padding:20px; text-align:center; border-radius:8px; margin:20px 0;">
+                    <p style="margin:0; font-size:14px;">⚠️ Nenhum dado disponível para este relatório.</p>
+                </div>
+            ` : `
+                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                    <thead>
+                        <tr style="background:#333; color:white;">
+                            ${headers.map(h => `<th style="padding:12px 8px; text-align:left; font-weight:600; border:1px solid #555;">${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${dataRows.join('')}
+                    </tbody>
+                </table>
+                
+                <div style="margin-top:20px; padding:12px; background:#f0f0f0; border-radius:4px;">
+                    <p style="margin:0; font-size:10px; color:#666;">
+                        <strong>Total de registos:</strong> ${dataRows.length} | 
+                        <strong>Relatório:</strong> ${title}
+                    </p>
+                </div>
+            `}
+            
+            <!-- Rodapé -->
+            <div style="margin-top:40px; padding-top:16px; border-top:1px solid #ccc; text-align:center; font-size:9px; color:#666;">
+                <p style="margin:0;">Este documento foi gerado eletronicamente pelo Sistema SMARTCONTROL</p>
+                <p style="margin:4px 0;">Página 1 de 1 | © ${new Date().getFullYear()} - Todos os direitos reservados</p>
+            </div>
+        </div>
+    `;
+    
     printContent(content);
     closeModal(reportModal);
 }
 
+// Relatório Geral de Movimentações - MELHORADO
 function generateGeneralReport(reportModal) {
-    const headers = ['Funcionário', 'Matrícula', 'Aparelho', 'IMEI', 'Data Entrega', 'Status'];
-    const rows = state.records.map(r => `<tr class="border-b"><td class="p-2">${r.employeeName}</td><td class="p-2">${r.employeeMatricula}</td><td class="p-2">${r.deviceModel}</td><td class="p-2">${r.deviceImei}</td><td class="p-2">${new Date(r.deliveryDate).toLocaleDateString('pt-BR',{timeZone:'UTC'})}</td><td class="p-2">${r.status}</td></tr>`);
-    generateReport('Relatório Geral de Movimentações', headers, rows, reportModal);
+    const headers = ['Funcionário', 'Matrícula', 'Aparelho', 'IMEI', 'Linha', 'Data Entrega', 'Status'];
+    
+    const rows = state.records.map((r, index) => {
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        const statusColor = r.status === 'Em Uso' ? '#3b82f6' : '#10b981';
+        const deliveryDate = new Date(r.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR');
+        
+        return `
+            <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${r.employeeName}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${r.employeeMatricula}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${r.deviceModel}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-family:monospace;">${r.deviceImei}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${r.deviceLine || '---'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${deliveryDate}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">
+                    <span style="padding:4px 8px; background:${statusColor}; color:white; border-radius:12px; font-size:9px; font-weight:600;">
+                        ${r.status}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    const subtitle = `Total de movimentações: ${state.records.length} | Em uso: ${state.records.filter(r => r.status === 'Em Uso').length}`;
+    generateReport('Relatório Geral de Movimentações', headers, rows, reportModal, subtitle);
 }
 
+// Relatório de Inventário de Aparelhos - MELHORADO
 function generateDevicesReport(reportModal) {
-    const headers = ['Modelo', 'IMEI', 'Status', 'Condição', 'Linha', 'Funcionário Atual'];
-    const rows = state.devices.map(d => {
+    const headers = ['Modelo', 'IMEI', 'Status', 'Condição', 'Linha', 'Funcionário'];
+    
+    const rows = state.devices.map((d, index) => {
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        
         let empName = '---';
         if (d.status === 'Em uso') {
             const rec = state.records.find(r => r.deviceImei === d.imei1 && r.status === 'Em Uso');
             if (rec) empName = rec.employeeName;
         }
-        return `<tr class="border-b"><td class="p-2">${d.model}</td><td class="p-2">${d.imei1}</td><td class="p-2">${d.status}</td><td class="p-2">${d.condition}</td><td class="p-2">${d.currentLine||'---'}</td><td class="p-2">${empName}</td></tr>`;
+        
+        const statusColors = {
+            'Em uso': '#3b82f6',
+            'Disponível': '#10b981',
+            'Indisponível': '#f59e0b'
+        };
+        
+        const conditionColors = {
+            'Novo': '#3b82f6',
+            'Aprovado para uso': '#10b981',
+            'Em manutenção': '#f59e0b',
+            'Danificado': '#ef4444',
+            'Sinistrado': '#dc2626',
+            'Com Defeito': '#ec4899'
+        };
+        
+        return `
+            <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${d.model}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-family:monospace;">${d.imei1}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">
+                    <span style="padding:4px 8px; background:${statusColors[d.status] || '#6b7280'}; color:white; border-radius:12px; font-size:9px; font-weight:600;">
+                        ${d.status}
+                    </span>
+                </td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">
+                    <span style="padding:4px 8px; background:${conditionColors[d.condition] || '#6b7280'}; color:white; border-radius:12px; font-size:9px; font-weight:600;">
+                        ${d.condition}
+                    </span>
+                </td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${d.currentLine || '---'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${empName}</td>
+            </tr>
+        `;
     });
-    generateReport('Relatório de Inventário de Aparelhos', headers, rows, reportModal);
+    
+    const emUso = state.devices.filter(d => d.status === 'Em uso').length;
+    const disponiveis = state.devices.filter(d => d.status === 'Disponível').length;
+    const subtitle = `Total: ${state.devices.length} | Em uso: ${emUso} | Disponíveis: ${disponiveis}`;
+    
+    generateReport('Relatório de Inventário de Aparelhos', headers, rows, reportModal, subtitle);
 }
 
+// Relatório de Linhas - MELHORADO
 function generateLinesReport(reportModal) {
-    const headers = ['Número', 'Operadora', 'Plano', 'Status', 'Aparelho Vinculado (IMEI)'];
-    const rows = state.lines.map(line => `<tr class="border-b"><td class="p-2">${line.numero}</td><td class="p-2">${line.operadora}</td><td class="p-2">${line.plano||'---'}</td><td class="p-2">${line.status}</td><td class="p-2">${line.imeiVinculado||'---'}</td></tr>`);
-    generateReport('Relatório de Inventário de Linhas', headers, rows, reportModal);
+    const headers = ['Número', 'Operadora', 'Plano', 'Status', 'Aparelho Vinculado'];
+    
+    const rows = state.lines.map((line, index) => {
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        
+        const statusColors = {
+            'Ativa': '#10b981',
+            'Inativa': '#f59e0b',
+            'Cancelada': '#ef4444'
+        };
+        
+        return `
+            <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-weight:600;">${line.numero}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${line.operadora}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${line.plano || '---'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">
+                    <span style="padding:4px 8px; background:${statusColors[line.status] || '#6b7280'}; color:white; border-radius:12px; font-size:9px; font-weight:600;">
+                        ${line.status}
+                    </span>
+                </td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-family:monospace; text-align:center;">${line.imeiVinculado || '---'}</td>
+            </tr>
+        `;
+    });
+    
+    const ativas = state.lines.filter(l => l.status === 'Ativa').length;
+    const vinculadas = state.lines.filter(l => l.imeiVinculado).length;
+    const subtitle = `Total: ${state.lines.length} | Ativas: ${ativas} | Vinculadas: ${vinculadas}`;
+    
+    generateReport('Relatório de Inventário de Linhas Telefónicas', headers, rows, reportModal, subtitle);
 }
 
+// Relatório de Manutenção - MELHORADO
 function generateMaintenanceReport(reportModal) {
-    const headers = ['Aparelho', 'IMEI', 'Data Envio', 'Data Retorno', 'Defeito', 'Custo', 'Status'];
-    const rows = state.maintenance.map(m => `<tr class="border-b"><td class="p-2">${m.deviceModel}</td><td class="p-2">${m.deviceImei}</td><td class="p-2">${formatDateForInput(m.data_envio)}</td><td class="p-2">${m.data_retorno?formatDateForInput(m.data_retorno):'---'}</td><td class="p-2">${m.defeito_reportado}</td><td class="p-2">${m.custo?'R$ ' + parseFloat(m.custo).toFixed(2):'---'}</td><td class="p-2">${m.status}</td></tr>`);
-    generateReport('Relatório de Manutenção de Aparelhos', headers, rows, reportModal);
-}
-
-export function generateRepairAuthorization(maintId) {
-    const maint = state.maintenance.find(m => m.id === maintId);
-    if (!maint || !maint.custo) { showToast("Custo não informado para gerar autorização.", true); return; }
-
-    const device = state.devices.find(d => d.imei1 === maint.deviceImei);
-    const content = `
-        <div class="p-8 bg-white font-sans text-sm">
-            ${getReportHeader()}
-            <h1 class="text-xl font-bold text-center my-4">AUTORIZAÇÃO DE CONSERTO</h1>
-            <div class="mt-6 border-t pt-4">
-                <h2 class="text-lg font-bold mb-2">1. EQUIPAMENTO</h2>
-                <div class="grid grid-cols-2 gap-x-4">
-                    <div><strong>Modelo:</strong> ${device.model}</div>
-                    <div><strong>IMEI:</strong> ${device.imei1}</div>
-                </div>
-            </div>
-            <div class="mt-6 border-t pt-4">
-                <h2 class="text-lg font-bold mb-2">2. DETALHES DO REPARO</h2>
-                <p><strong>Defeito Reportado:</strong> ${maint.defeito_reportado}</p>
-                <p><strong>Fornecedor:</strong> ${maint.fornecedor || 'N/A'}</p>
-                <p class="font-bold"><strong>Custo Autorizado:</strong> R$ ${parseFloat(maint.custo).toFixed(2)}</p>
-            </div>
-            <div class="mt-16 pt-4 text-center text-sm">
-                <p class="text-xs mb-8">Autorizamos o conserto do equipamento descrito, pelo valor estipulado.</p>
-                <div class="flex justify-around">
-                    <div class="w-2/5 text-center"><div class="border-b border-gray-500 pb-2"></div><p class="mt-1">Assinatura do Gestor</p></div>
-                    <div class="w-2/5 text-center"><div class="border-b border-gray-500 pb-2"></div><p class="mt-1">Assinatura do Responsável (TI)</p></div>
-                </div>
-            </div>
-        </div>
-    `;
-    printContent(content);
+    const headers = ['Nº OS', 'Aparelho', 'IMEI', 'Envio', 'Retorno', 'Defeito', 'Custo', 'Status'];
+    
+    const rows = state.maintenance.map((m, index) => {
+        const bgColor = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+        const dataEnvio = formatDateForInput(m.data_envio);
+        const dataRetorno = m.data_retorno ? formatDateForInput(m.data_retorno) : '---';
+        const custo = m.custo ? `R$ ${parseFloat(m.custo).toFixed(2)}` : '---';
+        
+        const statusColors = {
+            'Em manutenção': '#f59e0b',
+            'Concluído': '#10b981',
+            'Cancelado': '#ef4444'
+        };
+        
+        return `
+            <tr style="background:${bgColor}; border-bottom:1px solid #e5e7eb;">
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-weight:600;">${m.numero_os || 'N/A'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb;">${m.modelo || 'N/A'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-family:monospace;">${m.imei1 || 'N/A'}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${dataEnvio}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">${dataRetorno}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; font-size:9px;">${(m.defeito_reportado || '').substring(0, 50)}${m.defeito_reportado && m.defeito_reportado.length > 50 ? '...' : ''}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:right; font-weight:600;">${custo}</td>
+                <td style="padding:10px 8px; border:1px solid #e5e7eb; text-align:center;">
+                    <span style="padding:4px 8px; background:${statusColors[m.status] || '#6b7280'}; color:white; border-radius:12px; font-size:9px; font-weight:600;">
+                        ${m.status}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    const emManutencao = state.maintenance.filter(m => m.status === 'Em manutenção').length;
+    const custoTotal = state.maintenance
+        .filter(m => m.custo)
+        .reduce((sum, m) => sum + parseFloat(m.custo), 0)
+        .toFixed(2);
+    
+    const subtitle = `Total de OS: ${state.maintenance.length} | Em manutenção: ${emManutencao} | Custo Total: R$ ${custoTotal}`;
+    
+    generateReport('Relatório de Manutenção de Aparelhos', headers, rows, reportModal, subtitle);
 }
 
 export function initReportsModule() {
@@ -130,4 +269,5 @@ export function initReportsModule() {
     if (reportDevicesBtn) reportDevicesBtn.addEventListener('click', () => generateDevicesReport(reportModal));
     if (reportLinesBtn) reportLinesBtn.addEventListener('click', () => generateLinesReport(reportModal));
     if (reportMaintenanceBtn) reportMaintenanceBtn.addEventListener('click', () => generateMaintenanceReport(reportModal));
+
 }
