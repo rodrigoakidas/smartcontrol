@@ -1,12 +1,10 @@
 // SMARTCONTROL/static/js/modules/line_records.js
+// VERSÃO CORRIGIDA - Substitua TODO o conteúdo do arquivo por este código
+
 import { state } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
 import { API_URL } from './api.js';
 import { getReportHeader, printContent } from './reports.js';
-
-// Substitua a função printLineTerm em line_records.js por esta versão:
-
-// Substitua a função printLineTerm em line_records.js por esta versão:
 
 function printLineTerm(recordData) {
     const deliveryDate = recordData.data_entrega 
@@ -122,7 +120,6 @@ function printLineTerm(recordData) {
     printContent(content);
 }
 
-
 window.openLineTermForm = (lineId, lineNumber) => {
     const modal = document.getElementById('line-term-modal');
     const form = document.getElementById('line-term-form');
@@ -149,11 +146,11 @@ export function initLineRecordsModule() {
         e.preventDefault();
         const saveButton = form.querySelector('button[type="submit"]');
         
-         const payload = {
+        const payload = {
             linha_id: document.getElementById('line-term-line-id').value,
-            matricula_funcionario: document.getElementById('line-term-employee-select').value, // Verifique se esta linha está correta
+            matricula_funcionario: document.getElementById('line-term-employee-select').value,
             data_entrega: document.getElementById('line-term-delivery-date').value,
-            currentUser: state.currentUser // Adicione esta linha para enviar o utilizador logado
+            currentUser: state.currentUser
         };
 
         setLoading(saveButton);
@@ -180,9 +177,10 @@ export function initLineRecordsModule() {
         }
     });
 
-    document.getElementById('line-term-print-btn').addEventListener('click', () => {
-        // Implementar lógica de impressão para um termo já existente se necessário
-        showToast("Salve o termo primeiro para poder imprimir.", true);
-    });
-
+    const printBtn = document.getElementById('line-term-print-btn');
+    if (printBtn) {
+        printBtn.addEventListener('click', () => {
+            showToast("Salve o termo primeiro para poder imprimir.", true);
+        });
+    }
 }
