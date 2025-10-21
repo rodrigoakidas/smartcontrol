@@ -2,7 +2,7 @@
 
 import { state, fetchAllData } from '../app.js';
 import { openModal, closeModal, showToast } from './ui.js';
-import { API_URL } from './api.js';
+import { API_URL, formatDateForInput } from './api.js';
 
 function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToRender = state.employees) {
     employeeTableBody.innerHTML = '';
@@ -70,12 +70,12 @@ async function showEmployeeHistory(employeeHistoryModal, matricula) {
             historyRecords.forEach(r => {
                 const statusClass = r.status === 'Devolvido' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
                 tbody.innerHTML += `
-        <tr class="border-b">
-            <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
-            <td class="p-3">${formatDateForInput(r.deliveryDate)}</td>
-            <td class="p-3">${r.returnDate ? formatDateForInput(r.returnDate) : '---'}</td>
-            <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
-        </tr>`;
+    <tr class="border-b">
+        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
+        <td class="p-3">${formatDateForInput(r.deliveryDate)}</td>
+        <td class="p-3">${r.returnDate ? formatDateForInput(r.returnDate) : '---'}</td>
+        <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
+    </tr>`;
                 });
         }
     } catch (error) {
@@ -246,4 +246,5 @@ export function initEmployeesModule() {
     }
 
 }
+
 
