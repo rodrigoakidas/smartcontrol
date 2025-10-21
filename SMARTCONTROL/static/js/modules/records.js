@@ -3,6 +3,74 @@ import { openModal, closeModal, showToast, formatDateForInput, setLoading, unset
 import { API_URL, fetchItemById, handleFileUpload } from './api.js';
 import { getReportHeader, printContent } from './reports.js';
 
+function extractTermoIdFromError(errorMessage) {
+    const match = errorMessage.match(/Nº\s*(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+}
+
+// Função para mostrar modal de conflito com opções
+function showConflictModal(errorMessage, termoId) {
+    // Remove modais de conflito anteriores se existirem
+    const existingModal = document.getElementById('conflict-modal');
+    if (existingModal) existingModal.remove();
+    
+    const modalHTML = `
+        <div id="conflict-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: flex;">
+            <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-md">
+                <header class="p-4 border-b flex justify-between items-center bg-yellow-50">
+                    <h2 class="text-xl font-bold text-yellow-800">⚠️ Aparelho em Uso</h2>
+                    <button onclick="closeConflictModal()" class="text-2xl text-gray-600 hover:text-gray-800">&times;</button>
+                </header>
+                <div class="p-6">
+                    <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                        <p class="text-yellow-800">${errorMessage}</p>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        Este aparelho já possui um termo ativo. Você pode:
+                    </p>
+                    <div class="space-y-3">
+                        <button onclick="viewExistingTermo(${termoId})" class="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                            Ver Termo Existente (Nº ${termoId})
+                        </button>
+                        <button onclick="closeConflictModal()" class="w-full px-4 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                            Fechar e Escolher Outro Aparelho
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Inicializa os ícones do Lucide
+    if (window.lucide) {
+        lucide.createIcons();
+    }
+}
+
+// Funções globais para o modal de conflito
+window.closeConflictModal = function() {
+    const modal = document.getElementById('conflict-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+window.viewExistingTermo = async function(termoId) {
+    window.closeConflictModal();
+    const recordModal = document.getElementById('record-modal');
+    closeModal(recordModal);
+    
+    // Aguarda um momento para fechar o modal atual
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Abre o termo existente
+    openRecordForm(termoId);
+}
+
+
 // Função para buscar uma página específica de registos
 export async function fetchRecordsPage(page) {
     const { recordsPerPage, filter } = state.mainTable;
@@ -669,25 +737,37 @@ export function initRecordsModule() {
             closeModal(recordModal); // Fecha o modal
 
         } catch (error) {
-            // Se ocorreu algum erro durante o processo
-            console.error("Erro ao salvar o termo:", error);
-            showToast(`Erro ao salvar: ${error.message}`, true); // Exibe mensagem de erro
-            success = false; // Garante que está marcado como falha
-        } finally {
-            // Este bloco executa SEMPRE, quer haja sucesso ou erro
-            unsetLoading(saveButton); // Reativa o botão
-            isSubmitting = false; // Permite nova submissão
+        // Se chegou aqui, a operação falhou
+        console.error("Erro ao salvar o termo:", error);
+        
+        // Verifica se é erro de conflito (aparelho em uso)
+        if (error.message && error.message.includes('já está associado ao termo')) {
+            const termoId = extractTermoIdFromError(error.message);
+            if (termoId) {
+                showConflictModal(error.message, termoId);
+            } else {
+                showToast(error.message, true);
+            }
+        } else {
+            showToast(`Erro ao salvar: ${error.message}`, true);
+        }
+        success = false;
+        
+    } finally {
+        // Este bloco executa SEMPRE
+        unsetLoading(saveButton);
+        isSubmitting = false;
 
-            // Imprime automaticamente APENAS se a operação foi POST, bem-sucedida, e printData foi preparado
-            if (success && printData) {
-                try {
-                    await printSingleRecord(printData); // Passa o objeto completo para evitar nova busca
-                } catch (printError) {
-                     console.error("Erro durante a impressão automática:", printError);
-                     showToast("Termo salvo, mas houve erro ao gerar a impressão.", true);
-                }
+        // Imprime automaticamente APENAS se sucesso E for POST
+        if (success && printData) {
+            try {
+                await printSingleRecord(printData);
+            } catch (printError) {
+                 console.error("Erro durante a impressão automática:", printError);
+                 showToast("Termo salvo, mas houve erro ao gerar a impressão.", true);
             }
         }
+    }
     });
 
     // Listener para o botão "Imprimir" DENTRO do modal
@@ -740,3 +820,4 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
