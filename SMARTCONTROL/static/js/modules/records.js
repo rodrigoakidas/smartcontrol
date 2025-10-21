@@ -247,6 +247,7 @@ async function openRecordForm(recordId = null) {
 }
 
 // Função para gerar o HTML do termo para impressão
+// Função melhorada para gerar o HTML do termo para impressão
 function generatePrintableTermHTML(data) {
     const accessories = data.acessorios || data.accessories || [];
     const accessoriesList = accessories.length > 0 ? accessories.join(', ') : 'Nenhum';
@@ -255,59 +256,172 @@ function generatePrintableTermHTML(data) {
     const deliveryDateStr = data.data_entrega || data.deliveryDate;
     const deliveryDate = deliveryDateStr ? new Date(deliveryDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Data Inválida';
 
+    // Define o nome de quem entregou
+    const delivererName = data.delivery_checker || state.currentUser?.nome || 'N/A';
+
     // --- Seção de Devolução ---
     let returnSectionHTML = '';
     const returnDateStr = data.data_devolucao || data.returnDate;
-     if (returnDateStr) {
-        // Formatação segura da data de devolução
+    
+    if (returnDateStr) {
         const returnDate = new Date(returnDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR');
-        // Define o nome do receptor (usa o guardado ou o utilizador logado como fallback)
         const receiverName = data.return_checker || state.currentUser?.nome || 'N/A';
 
-         returnSectionHTML = `
-            <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">4. DEVOLUÇÃO</h3>
-            <p><strong>Data:</strong> ${returnDate}</p>
-            <p><strong>Condição:</strong> ${data.condicao_devolucao || 'N/A'}</p>
-            <p><strong>Obs:</strong> ${data.notas_devolucao || 'Nenhuma'}</p>
-            <p><strong>Recebido por:</strong> ${receiverName}</p>
-            <p style="font-size:10px; margin-top:16px;">Declaro que devolvi o equipamento e acessórios acima descritos.</p>
-            <div style="margin-top:64px; display:flex; justify-content:space-around; text-align:center; font-size:12px;">
-                <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${data.employeeName || 'N/A'}</p></div>
-                <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${receiverName}</p></div>
+        returnSectionHTML = `
+            <div style="page-break-before: always; padding-top: 40px;">
+                <h3 style="font-size:16px; font-weight:700; margin: 24px 0 16px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                    4. TERMO DE DEVOLUÇÃO
+                </h3>
+                
+                <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td>
+                        <td style="padding:8px; border:1px solid #ddd;">${returnDate}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
+                        <td style="padding:8px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
+                        <td style="padding:8px; border:1px solid #ddd;">${data.notas_devolucao || 'Nenhuma observação'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Recebido por:</td>
+                        <td style="padding:8px; border:1px solid #ddd;">${receiverName}</td>
+                    </tr>
+                </table>
+                
+                <div style="background:#f0f0f0; padding:16px; border-radius:8px; margin:24px 0;">
+                    <p style="font-size:11px; line-height:1.6; margin:0;">
+                        <strong>Declaração do Funcionário:</strong><br>
+                        Declaro que devolvi o equipamento e todos os acessórios acima descritos, 
+                        nas condições informadas, e que não possuo mais a posse ou responsabilidade sobre os mesmos.
+                    </p>
+                </div>
+                
+                <div style="margin-top:80px; display:flex; justify-content:space-around; text-align:center;">
+                    <div style="width:40%;">
+                        <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                        <p style="font-weight:600; margin:0;">${data.employeeName || 'N/A'}</p>
+                        <p style="font-size:10px; color:#666; margin:0;">Assinatura do Funcionário</p>
+                    </div>
+                    <div style="width:40%;">
+                        <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                        <p style="font-weight:600; margin:0;">${receiverName}</p>
+                        <p style="font-size:10px; color:#666; margin:0;">Assinatura do Receptor</p>
+                    </div>
+                </div>
             </div>`;
     }
 
-    // --- Seção de Entrega ---
-    // Define o nome de quem entregou (usa o guardado ou o utilizador logado como fallback)
-    const delivererName = data.delivery_checker || state.currentUser?.nome || 'N/A';
-    const deliverySection = `
-        <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">3. ENTREGA</h3>
-        <p><strong>Data:</strong> ${deliveryDate}</p>
-        <p><strong>Condição:</strong> ${data.condicao_entrega || data.deliveryCondition || 'N/A'}</p>
-        <p><strong>Obs:</strong> ${data.notas_entrega || data.deliveryNotes || 'Nenhuma'}</p>
-        <p><strong>Entregue por:</strong> ${delivererName}</p>
-        <p style="font-size:10px; margin-top:16px;">Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições, responsabilizando-me por sua guarda e bom uso.</p>
-        <div style="margin-top:64px; display:flex; justify-content:space-around; text-align:center; font-size:12px;">
-            <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${data.employeeName || 'N/A'}</p></div>
-            <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${delivererName}</p></div>
-        </div>`;
-
     // --- Estrutura Principal do Termo ---
     return `
-        <div style="padding:16px; font-family:sans-serif; font-size:12px; color:black;">
+        <div style="padding:24px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; color:#000; max-width:800px; margin:0 auto;">
             ${getReportHeader()}
-            <h2 style="font-size:18px; font-weight:700; text-align:center; margin: 24px 0;">TERMO DE RESPONSABILIDADE Nº ${data.id && data.id !== 'Novo' ? data.id : '___'}</h2>
-            <h3 style="font-size:14px; font-weight:700; margin-bottom:8px;">1. FUNCIONÁRIO</h3>
-            <p><strong>Nome:</strong> ${data.employeeName || 'N/A'}</p>
-            <p><strong>Matrícula:</strong> ${data.employeeMatricula || 'N/A'}</p>
-            <p><strong>Cargo:</strong> ${data.employeePosition || 'N/A'}</p>
-            <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">2. EQUIPAMENTO</h3>
-            <p><strong>Modelo:</strong> ${data.deviceModel || 'N/A'}</p>
-            <p><strong>IMEI 1:</strong> ${data.deviceImei || 'N/A'}</p>
-            <p><strong>Linha:</strong> ${data.deviceLine || 'N/A'}</p>
-            <p><strong>Acessórios:</strong> ${accessoriesList}</p>
-            ${deliverySection}
+            
+            <h1 style="font-size:22px; font-weight:700; text-align:center; margin: 32px 0; text-transform:uppercase; border-bottom:3px solid #333; padding-bottom:12px;">
+                Termo de Responsabilidade Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'}
+            </h1>
+            
+            <!-- SEÇÃO 1: FUNCIONÁRIO -->
+            <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                1. DADOS DO FUNCIONÁRIO
+            </h3>
+            
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Nome Completo:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.employeeName || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Matrícula:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.employeeMatricula || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Cargo:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.employeePosition || 'N/A'}</td>
+                </tr>
+            </table>
+            
+            <!-- SEÇÃO 2: EQUIPAMENTO -->
+            <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                2. DADOS DO EQUIPAMENTO
+            </h3>
+            
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Modelo:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.deviceModel || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">IMEI Principal:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.deviceImei || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Linha Telefónica:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.deviceLine || 'Sem linha vinculada'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Acessórios Inclusos:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${accessoriesList}</td>
+                </tr>
+            </table>
+            
+            <!-- SEÇÃO 3: ENTREGA -->
+            <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                3. TERMO DE ENTREGA
+            </h3>
+            
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Entrega:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${deliveryDate}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.condicao_entrega || data.deliveryCondition || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${data.notas_entrega || data.deliveryNotes || 'Nenhuma observação'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Entregue por:</td>
+                    <td style="padding:8px; border:1px solid #ddd;">${delivererName}</td>
+                </tr>
+            </table>
+            
+            <div style="background:#f0f0f0; padding:16px; border-radius:8px; margin:24px 0;">
+                <p style="font-size:11px; line-height:1.6; margin:0;">
+                    <strong>Declaração do Funcionário:</strong><br>
+                    Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições, 
+                    responsabilizando-me por sua guarda, conservação e uso adequado durante o período em que 
+                    estiver sob minha posse. Comprometo-me a devolver o equipamento nas mesmas condições de uso, 
+                    ressalvado o desgaste natural. Em caso de perda, roubo ou dano intencional, assumo a 
+                    responsabilidade pelos prejuízos causados.
+                </p>
+            </div>
+            
+            <div style="margin-top:80px; display:flex; justify-content:space-around; text-align:center;">
+                <div style="width:40%;">
+                    <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                    <p style="font-weight:600; margin:0;">${data.employeeName || 'N/A'}</p>
+                    <p style="font-size:10px; color:#666; margin:0;">Assinatura do Funcionário</p>
+                </div>
+                <div style="width:40%;">
+                    <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                    <p style="font-weight:600; margin:0;">${delivererName}</p>
+                    <p style="font-size:10px; color:#666; margin:0;">Assinatura do Responsável</p>
+                </div>
+            </div>
+            
             ${returnSectionHTML}
+            
+            <!-- Rodapé com data de impressão -->
+            <div style="margin-top:60px; padding-top:16px; border-top:1px solid #ccc; text-align:center; font-size:10px; color:#666;">
+                <p style="margin:0;">Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
         </div>`;
 }
 
@@ -623,5 +737,6 @@ export function initRecordsModule() {
             }
         });
     }
+
 
 } // Fim de initRecordsModule
