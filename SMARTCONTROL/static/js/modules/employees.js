@@ -70,12 +70,12 @@ async function showEmployeeHistory(employeeHistoryModal, matricula) {
             historyRecords.forEach(r => {
                 const statusClass = r.status === 'Devolvido' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
                 tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
-                        <td class="p-3">${new Date(r.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                        <td class="p-3">${r.returnDate ? new Date(r.returnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '---'}</td>
-                        <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
-                    </tr>`;
+    <tr class="border-b">
+        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
+        <td class="p-3">${new Date(r.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
+        <td class="p-3">${r.returnDate ? new Date(r.returnDate + 'T00:00:00').toLocaleDateString('pt-BR') : '---'}</td>
+        <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
+    </tr>`;
             });
         }
     } catch (error) {
@@ -244,4 +244,5 @@ export function initEmployeesModule() {
             }
         });
     }
+
 }
