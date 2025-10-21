@@ -4,30 +4,80 @@ import { openModal, closeModal, showToast, formatDateForInput, setLoading, unset
 import { API_URL } from './api.js';
 import { getReportHeader, printContent } from './reports.js';
 
+// Substitua a função printLineTerm em line_records.js por esta versão:
+
 function printLineTerm(recordData) {
-    const deliveryDate = recordData.data_entrega ? new Date(recordData.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data Inválida';
+    const deliveryDate = recordData.data_entrega 
+        ? new Date(recordData.data_entrega + 'T00:00:00').toLocaleDateString('pt-BR') 
+        : 'Data Inválida';
+    
+    const entregador = state.currentUser?.nome || 'Sistema';
+    
     const content = `
-        <div style="padding:16px; font-family:sans-serif; font-size:12px; color:black;">
+        <div style="padding:24px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; color:#000; max-width:800px; margin:0 auto;">
             ${getReportHeader()}
-            <h2 style="font-size:18px; font-weight:700; text-align:center; margin: 24px 0;">TERMO DE RESPONSABILIDADE DE LINHA Nº ${recordData.id || '___'}</h2>
-            <p>Declaro, para os devidos fins, que recebi da empresa o SIM Card (chip) da linha telefónica abaixo para uso exclusivo a serviço, sob minha total responsabilidade.</p>
             
-            <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">1. FUNCIONÁRIO</h3>
-            <p><strong>Nome:</strong> ${recordData.employeeName || 'N/A'}</p>
-            <p><strong>Matrícula:</strong> ${recordData.employee  || 'N/A'}</p>
-
-            <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">2. LINHA TELEFÓNICA</h3>
-            <p><strong>Número:</strong> ${recordData.numero || 'N/A'}</p>
-            <p><strong>Data de Entrega:</strong> ${deliveryDate}</p>
-
-            <div style="margin-top:80px; display:flex; justify-content:space-around; text-align:center; font-size:12px;">
-                <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${recordData.employeeName || 'N/A'}</p></div>
-                <div style="width:40%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${state.currentUser.nome}</p></div>
+            <h1 style="font-size:22px; font-weight:700; text-align:center; margin: 32px 0; text-transform:uppercase; border-bottom:3px solid #333; padding-bottom:12px;">
+                Termo de Responsabilidade de Linha Nº ${recordData.id ? String(recordData.id).padStart(5, '0') : '_____'}
+            </h1>
+            
+            <div style="background:#e6f7ff; border-left:4px solid #1890ff; padding:16px; margin:24px 0; border-radius:4px;">
+                <p style="margin:0; font-size:11px; line-height:1.6;">
+                    <strong>ℹ️ Informação:</strong> Este documento estabelece a responsabilidade do funcionário 
+                    sobre o uso da linha telefónica corporativa fornecida pela empresa.
+                </p>
             </div>
-        </div>
-    `;
-    printContent(content);
-}
+            
+            <!-- SEÇÃO 1: FUNCIONÁRIO -->
+            <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                1. DADOS DO FUNCIONÁRIO
+            </h3>
+            
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; width:35%; font-weight:600;">Nome Completo:</td>
+                    <td style="padding:10px; border:1px solid #ddd;">${recordData.employeeName || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Matrícula:</td>
+                    <td style="padding:10px; border:1px solid #ddd;">${recordData.employeeMatricula || 'N/A'}</td>
+                </tr>
+            </table>
+            
+            <!-- SEÇÃO 2: LINHA TELEFÓNICA -->
+            <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                2. DADOS DA LINHA TELEFÓNICA
+            </h3>
+            
+            <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; width:35%; font-weight:600;">Número:</td>
+                    <td style="padding:10px; border:1px solid #ddd; font-size:16px; font-weight:600; color:#059669;">${recordData.numero || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Data de Entrega:</td>
+                    <td style="padding:10px; border:1px solid #ddd;">${deliveryDate}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Entregue por:</td>
+                    <td style="padding:10px; border:1px solid #ddd;">${entregador}</td>
+                </tr>
+            </table>
+            
+            <!-- SEÇÃO 3: TERMOS E RESPONSABILIDADES -->
+            <h3 style="font-size:16px; font-weight:700; margin: 32px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                3. TERMOS E RESPONSABILIDADES
+            </h3>
+            
+            <div style="background:#f9fafb; border:1px solid #ddd; padding:20px; border-radius:8px; margin-bottom:24px;">
+                <p style="margin:0 0 12px 0; font-size:11px; line-height:1.8;">
+                    <strong>O funcionário declara estar ciente e concorda com os seguintes termos:</strong>
+                </p>
+                <ol style="margin:0; padding-left:20px; font-size:11px; line-height:1.8;">
+                    <li style="margin-bottom:8px;">A linha telefónica é de propriedade da empresa e destina-se exclusivamente ao uso profissional;</li>
+                    <li style="margin-bottom:8px;">É de responsabilidade do funcionário zelar pelo SIM card e informar imediatamente em caso de perda, roubo ou dano;</li>
+                    <li style="margin-bottom:8px;">O uso indevido ou excessivo da linha pode resultar em medidas disciplinares;</li>
+                    <li style="margin-bottom:8px;">Em caso de desligamento ou devolução, o SIM card deverá ser devolvido intacto;</li
 
 
 window.openLineTermForm = (lineId, lineNumber) => {
@@ -91,4 +141,5 @@ export function initLineRecordsModule() {
         // Implementar lógica de impressão para um termo já existente se necessário
         showToast("Salve o termo primeiro para poder imprimir.", true);
     });
+
 }
