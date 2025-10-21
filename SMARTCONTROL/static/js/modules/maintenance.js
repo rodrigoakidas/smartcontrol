@@ -119,52 +119,163 @@ export function initMaintenanceModule() {
     const addMaintenanceBtn = document.getElementById("add-maintenance-btn");
     const cancelMaintenanceFormBtn = document.getElementById("cancel-maintenance-form-btn");
 
-    async function generateRepairOrder(maintId) {
-        if (!maintId) {
-            showToast("ID da manutenção não encontrado.", true);
-            return;
-        }
+// Substitua a função generateRepairOrder em maintenance.js por esta versão melhorada:
+
+async function generateRepairOrder(maintId) {
+    if (!maintId) {
+        showToast("ID da manutenção não encontrado.", true);
+        return;
+    }
+    
+    try {
+        const maintDetails = state.maintenance.find(m => m.id === maintId);
+        if (!maintDetails) throw new Error("Dados da manutenção não localizados.");
+
+        const operatorName = state.currentUser ? state.currentUser.nome : 'Operador do Sistema';
+        const custoDisplay = maintDetails.custo && parseFloat(maintDetails.custo) > 0 
+            ? `R$ ${parseFloat(maintDetails.custo).toFixed(2)}` 
+            : 'A definir';
+
+        const dataEnvio = maintDetails.data_envio 
+            ? new Date(maintDetails.data_envio + 'T00:00:00').toLocaleDateString('pt-BR') 
+            : 'N/A';
         
-        try {
-            const maintDetails = state.maintenance.find(m => m.id === maintId);
-            if (!maintDetails) throw new Error("Dados da manutenção não localizados.");
-    
-            const operatorName = state.currentUser ? state.currentUser.nome : 'Operador do Sistema';
-            const custoHtml = maintDetails.custo && parseFloat(maintDetails.custo) > 0 ? `<p><strong>Custo Estimado/Final:</strong> R$ ${parseFloat(maintDetails.custo).toFixed(2)}</p>` : '';
+        const dataRetorno = maintDetails.data_retorno 
+            ? new Date(maintDetails.data_retorno + 'T00:00:00').toLocaleDateString('pt-BR') 
+            : 'Em aberto';
 
-            const content = `
-                <div style="padding:16px; font-family:sans-serif; font-size:12px; color:black;">
-                    ${getReportHeader()}
-                    <h2 style="font-size:18px; font-weight:700; text-align:center; margin: 24px 0;">
-                        ORDEM DE REPARO Nº ${maintDetails.numero_os || 'N/A'}
-                    </h2>
-                    
-                    <h3 style="font-size:14px; font-weight:700; margin-bottom:8px; border-top:1px solid #ddd; padding-top:16px;">1. EQUIPAMENTO</h3>
-                    <p><strong>Modelo:</strong> ${maintDetails.modelo || 'N/A'}</p>
-                    <p><strong>IMEI:</strong> ${maintDetails.imei1 || 'N/A'}</p>
-                    <p><strong>Fornecedor:</strong> ${maintDetails.fornecedor || 'N/A'}</p>
-                    
-                    <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">2. DEFEITO REPORTADO</h3>
-                    <p>${maintDetails.defeito_reportado || 'Nenhum defeito reportado.'}</p>
-
-                    <h3 style="font-size:14px; font-weight:700; margin: 16px 0 8px 0; border-top:1px solid #ddd; padding-top:16px;">3. CUSTOS</h3>
-                    ${custoHtml || '<p>Nenhum custo informado.</p>'}
-    
-                    <div style="margin-top:80px; font-size:12px; text-align:center;">
-                        <p>Autorizo o envio do equipamento acima para diagnóstico e reparo.</p>
-                        <div style="margin-top:64px; display:flex; justify-content:space-around; text-align:center;">
-                            <div style="width:30%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>Assinatura do Funcionário</p></div>
-                            <div style="width:30%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>${operatorName}</p></div>
-                            <div style="width:30%;"><div style="border-bottom:1px solid #333; height:48px;"></div><p>Assinatura da Testemunha</p></div>
-                        </div>
+        const content = `
+            <div style="padding:24px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:12px; color:#000; max-width:800px; margin:0 auto;">
+                ${getReportHeader()}
+                
+                <h1 style="font-size:22px; font-weight:700; text-align:center; margin: 32px 0; text-transform:uppercase; border:3px solid #333; padding:16px; background:#f8f8f8;">
+                    Ordem de Reparo Nº ${maintDetails.numero_os || 'N/A'}
+                </h1>
+                
+                <!-- Status Badge -->
+                <div style="text-align:center; margin:20px 0;">
+                    <span style="display:inline-block; padding:8px 20px; background:${maintDetails.status === 'Concluído' ? '#10b981' : '#f59e0b'}; color:white; border-radius:20px; font-weight:600; font-size:14px;">
+                        ${maintDetails.status || 'Em manutenção'}
+                    </span>
+                </div>
+                
+                <!-- SEÇÃO 1: EQUIPAMENTO -->
+                <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                    1. DADOS DO EQUIPAMENTO
+                </h3>
+                
+                <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; width:35%; font-weight:600;">Modelo:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">${maintDetails.modelo || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">IMEI:</td>
+                        <td style="padding:10px; border:1px solid #ddd; font-family:monospace; font-size:14px;">${maintDetails.imei1 || 'N/A'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Fornecedor/Assistência:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">${maintDetails.fornecedor || 'Não especificado'}</td>
+                    </tr>
+                </table>
+                
+                <!-- SEÇÃO 2: DETALHES DO REPARO -->
+                <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                    2. DETALHES DO REPARO
+                </h3>
+                
+                <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; width:35%; font-weight:600;">Data de Envio:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">${dataEnvio}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Data de Retorno:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">${dataRetorno}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600; vertical-align:top;">Defeito Reportado:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">
+                            <div style="background:#fff9e6; padding:8px; border-left:3px solid #f59e0b;">
+                                ${maintDetails.defeito_reportado || 'Nenhum defeito reportado.'}
+                            </div>
+                        </td>
+                    </tr>
+                    ${maintDetails.servico_realizado ? `
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; font-weight:600; vertical-align:top;">Serviço Realizado:</td>
+                        <td style="padding:10px; border:1px solid #ddd;">
+                            <div style="background:#e6f7ff; padding:8px; border-left:3px solid #1890ff;">
+                                ${maintDetails.servico_realizado}
+                            </div>
+                        </td>
+                    </tr>
+                    ` : ''}
+                </table>
+                
+                <!-- SEÇÃO 3: CUSTOS -->
+                <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                    3. INFORMAÇÕES FINANCEIRAS
+                </h3>
+                
+                <table style="width:100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding:10px; border:1px solid #ddd; background:#f9f9f9; width:35%; font-weight:600;">Custo Total:</td>
+                        <td style="padding:10px; border:1px solid #ddd; font-size:18px; font-weight:700; color:#059669;">${custoDisplay}</td>
+                    </tr>
+                </table>
+                
+                ${maintDetails.custo && parseFloat(maintDetails.custo) > 0 ? `
+                <div style="background:#fef3c7; border:2px solid #f59e0b; padding:16px; border-radius:8px; margin:20px 0;">
+                    <p style="margin:0; font-size:11px; line-height:1.6;">
+                        <strong>⚠️ Atenção:</strong> O valor acima representa o custo autorizado para o reparo. 
+                        Qualquer custo adicional deverá ser previamente aprovado pela administração.
+                    </p>
+                </div>
+                ` : ''}
+                
+                <!-- SEÇÃO 4: AUTORIZAÇÕES -->
+                <h3 style="font-size:16px; font-weight:700; margin: 40px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
+                    4. AUTORIZAÇÕES
+                </h3>
+                
+                <div style="background:#f0f0f0; padding:16px; border-radius:8px; margin:20px 0;">
+                    <p style="font-size:11px; line-height:1.6; margin:0;">
+                        Autorizamos o envio do equipamento acima descrito para diagnóstico e reparo, 
+                        conforme os termos e condições estabelecidos pela empresa.
+                    </p>
+                </div>
+                
+                <div style="margin-top:80px; display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; text-align:center;">
+                    <div>
+                        <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                        <p style="font-weight:600; margin:4px 0;">Gestor</p>
+                        <p style="font-size:10px; color:#666; margin:0;">Autorização</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                        <p style="font-weight:600; margin:4px 0;">${operatorName}</p>
+                        <p style="font-size:10px; color:#666; margin:0;">Responsável Técnico</p>
+                    </div>
+                    <div>
+                        <div style="border-bottom:2px solid #000; height:60px; margin-bottom:8px;"></div>
+                        <p style="font-weight:600; margin:4px 0;">Testemunha</p>
+                        <p style="font-size:10px; color:#666; margin:0;">Testemunha</p>
                     </div>
                 </div>
-            `;
-            printContent(content);
-        } catch (error) {
-            showToast(error.message, true);
-        }
+                
+                <!-- Rodapé -->
+                <div style="margin-top:60px; padding-top:16px; border-top:1px solid #ccc; text-align:center; font-size:10px; color:#666;">
+                    <p style="margin:0;">Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
+                    <p style="margin:4px 0;">OS: ${maintDetails.numero_os || 'N/A'} | Sistema SMARTCONTROL</p>
+                </div>
+            </div>
+        `;
+        printContent(content);
+    } catch (error) {
+        showToast(error.message, true);
     }
+}
 
     if (manageMaintenanceBtn) {
         manageMaintenanceBtn.addEventListener("click", () => {
@@ -247,4 +358,5 @@ export function initMaintenanceModule() {
             }
         });
     }
+
 }
