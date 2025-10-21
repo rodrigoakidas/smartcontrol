@@ -1,6 +1,10 @@
-from flask import Blueprint, jsonify, request
-from config.database import get_connection
+# SMARTCONTROL/routes/employees_routes.py
+# (FICHEIRO COMPLETO E CORRIGIDO - Resolve Bug 1 e Bug 3)
+
+from flask import Blueprint, jsonify, request, g, current_app # Adicionado g e current_app
+# Removido: from config.database import get_connection
 from .audit_helper import log_change
+from .decorators import require_permission # Adicionado import do decorador
 import csv
 import io
 import json
@@ -10,25 +14,22 @@ employees_bp = Blueprint('employees', __name__)
 # GET /employees - Listar todos os funcionários
 @employees_bp.route('/', methods=['GET'])
 def get_employees():
-    conn = None
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT matricula as id, nome as name, cargo as position, email FROM funcionarios")
-        employees = cursor.fetchall()
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
+             
+        g.db_cursor.execute("SELECT matricula as id, nome as name, cargo as position, email FROM funcionarios")
+        employees = g.db_cursor.fetchall()
         return jsonify(employees)
     except Exception as e:
-        print(f"Erro ao buscar funcionários: {e}")
+        current_app.logger.error(f"Erro ao buscar funcionários: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao buscar funcionários'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
 
 # POST /employees - Adicionar um novo funcionário
 @employees_bp.route('/', methods=['POST'])
+@require_permission('employees_create') # Protegendo a criação
 def add_employee():
-    conn = None
     try:
         data = request.get_json()
         matricula = data.get('id')
@@ -43,13 +44,14 @@ def add_employee():
         if not all([matricula, nome, cargo]):
             return jsonify({'message': 'Matrícula, nome e cargo são obrigatórios'}), 400
 
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
+
+        g.db_cursor.execute(
             "INSERT INTO funcionarios (matricula, nome, cargo, email) VALUES (%s, %s, %s, %s)",
             (matricula, nome, cargo, email)
         )
-        conn.commit()
+        g.db_conn.commit()
 
         log_change(
             user_id=user_id,
@@ -62,19 +64,17 @@ def add_employee():
 
         return jsonify({'message': 'Funcionário adicionado com sucesso'}), 201
     except Exception as e:
+        if g.db_conn: g.db_conn.rollback()
         if 'Duplicate entry' in str(e):
             return jsonify({'message': f'A matrícula {matricula} já existe.'}), 409
-        print(f"Erro ao adicionar funcionário: {e}")
+        current_app.logger.error(f"Erro ao adicionar funcionário: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao adicionar funcionário'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
 
 # PUT /employees/<matricula> - Atualizar um funcionário
 @employees_bp.route('/<string:matricula>', methods=['PUT'])
+@require_permission('employees_update') # Protegendo a atualização
 def update_employee(matricula):
-    conn = None
     try:
         data = request.get_json()
         nome = data.get('name')
@@ -85,15 +85,16 @@ def update_employee(matricula):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute(
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
+
+        g.db_cursor.execute(
             "UPDATE funcionarios SET nome = %s, cargo = %s, email = %s WHERE matricula = %s",
             (nome, cargo, email, matricula)
         )
-        conn.commit()
+        g.db_conn.commit()
         
-        if cursor.rowcount == 0:
+        if g.db_cursor.rowcount == 0:
             return jsonify({'message': 'Funcionário não encontrado'}), 404
             
         log_change(
@@ -107,33 +108,31 @@ def update_employee(matricula):
             
         return jsonify({'message': 'Funcionário atualizado com sucesso'})
     except Exception as e:
-        print(f"Erro ao atualizar funcionário: {e}")
+        if g.db_conn: g.db_conn.rollback()
+        current_app.logger.error(f"Erro ao atualizar funcionário {matricula}: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao atualizar funcionário'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
 
 # DELETE /employees/<matricula> - Deletar um funcionário
 @employees_bp.route('/<string:matricula>', methods=['DELETE'])
+@require_permission('employees_delete') # Protegendo a exclusão
 def delete_employee(matricula):
-    conn = None
     try:
         data = request.get_json() or {}
         current_user = data.get('currentUser', {})
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
-        cursor.execute("SELECT nome FROM funcionarios WHERE matricula = %s", (matricula,))
-        employee_data = cursor.fetchone()
+        g.db_cursor.execute("SELECT nome FROM funcionarios WHERE matricula = %s", (matricula,))
+        employee_data = g.db_cursor.fetchone()
 
-        cursor.execute("DELETE FROM funcionarios WHERE matricula = %s", (matricula,))
-        conn.commit()
+        g.db_cursor.execute("DELETE FROM funcionarios WHERE matricula = %s", (matricula,))
+        g.db_conn.commit()
 
-        if cursor.rowcount == 0:
+        if g.db_cursor.rowcount == 0:
             return jsonify({'message': 'Funcionário não encontrado'}), 404
             
         log_change(
@@ -147,22 +146,20 @@ def delete_employee(matricula):
             
         return jsonify({'message': 'Funcionário excluído com sucesso'})
     except Exception as e:
+        if g.db_conn: g.db_conn.rollback()
         if 'foreign key constraint' in str(e).lower():
             return jsonify({'message': 'Não é possível excluir. O funcionário possui registros de aparelhos vinculados.'}), 409
-        print(f"Erro ao excluir funcionário: {e}")
+        current_app.logger.error(f"Erro ao excluir funcionário {matricula}: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao excluir funcionário'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
 
 # GET /employees/<matricula>/history - Obter histórico de aparelhos de um funcionário
 @employees_bp.route('/<string:matricula>/history', methods=['GET'])
 def get_employee_history(matricula):
-    conn = None
     try:
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
+             
         sql = """
             SELECT 
                 a.modelo AS deviceModel,
@@ -176,19 +173,17 @@ def get_employee_history(matricula):
             WHERE f.matricula = %s
             ORDER BY r.data_entrega DESC
         """
-        cursor.execute(sql, (matricula,))
-        history = cursor.fetchall()
+        g.db_cursor.execute(sql, (matricula,))
+        history = g.db_cursor.fetchall()
         return jsonify(history)
     except Exception as e:
-        print(f"Erro ao buscar histórico do funcionário: {e}")
+        current_app.logger.error(f"Erro ao buscar histórico do funcionário {matricula}: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao buscar histórico do funcionário'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
 
-# --- ROTA PARA IMPORTAÇÃO DE CSV (CORRIGIDA) ---
+# --- ROTA PARA IMPORTAÇÃO DE CSV (CORRIGIDA E PROTEGIDA) ---
 @employees_bp.route('/import', methods=['POST'])
+@require_permission('employees_import') # <-- CORREÇÃO DE SEGURANÇA
 def import_employees():
     if 'file' not in request.files:
         return jsonify({'message': 'Nenhum ficheiro enviado'}), 400
@@ -202,10 +197,9 @@ def import_employees():
     user_id = current_user.get('id')
     username = current_user.get('nome', 'Sistema')
 
-    conn = None
     try:
-        conn = get_connection()
-        cursor = conn.cursor()
+        if not g.db_cursor:
+             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
         
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_reader = csv.reader(stream)
@@ -228,21 +222,20 @@ def import_employees():
                 if not all([matricula, nome, cargo]):
                     failed_entries.append(f'Linha com dados obrigatórios em falta: {",".join(row)}')
                     continue
-
-                # CORREÇÃO: Usar INSERT IGNORE para não dar erro em duplicados
-                cursor.execute(
+                
+                g.db_cursor.execute(
                     "INSERT IGNORE INTO funcionarios (matricula, nome, cargo, email) VALUES (%s, %s, %s, %s)",
                     (matricula, nome, cargo, email)
                 )
-                if cursor.rowcount > 0:
+                if g.db_cursor.rowcount > 0:
                     success_count += 1
                 else:
                     skipped_count += 1
             except Exception as e:
                 failed_entries.append(f'Matrícula {row[0]}: Erro inesperado.')
-                print(f"Erro na linha do CSV (Funcionários): {row} -> {e}")
+                current_app.logger.warning(f"Erro na linha do CSV (Funcionários): {row} -> {e}")
         
-        conn.commit()
+        g.db_conn.commit()
 
         log_change(
             user_id=user_id,
@@ -259,11 +252,7 @@ def import_employees():
         }), 201
 
     except Exception as e:
-        print(f"Erro GERAL ao importar funcionários: {e}")
-        if conn:
-            conn.rollback()
+        if g.db_conn: g.db_conn.rollback()
+        current_app.logger.error(f"Erro GERAL ao importar funcionários: {e}", exc_info=True)
         return jsonify({'message': 'Erro interno ao processar o ficheiro CSV.'}), 500
-    finally:
-        if conn and conn.is_connected():
-            cursor.close()
-            conn.close()
+    # Removido 'finally'
