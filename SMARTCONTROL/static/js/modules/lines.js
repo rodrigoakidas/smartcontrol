@@ -2,7 +2,7 @@
 
 import { state, fetchAllData } from '../app.js';
 import { openModal, closeModal, showToast } from './ui.js';
-import { API_URL } from './api.js';
+import { API_URL, formatDateForInput } from './api.js';
 
 function renderLineTable(lineTableBody, noLinesMessage, linesToRender = state.lines) {
     if (!lineTableBody || !noLinesMessage) return;
@@ -68,12 +68,12 @@ async function showLineHistory(lineHistoryModal, lineId) {
         if (historyData && historyData.length > 0) {
             noHistoryMsg.classList.add('hidden');
             historyData.forEach(h => {
-                tbody.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-3">${h.aparelho_imei}</td>
-                        <td class="p-3">${new Date(h.data_vinculacao).toLocaleString('pt-BR')}</td>
-                        <td class="p-3">${h.data_desvinculacao ? new Date(h.data_desvinculacao).toLocaleString('pt-BR') : 'Atualmente vinculado'}</td>
-                    </tr>`;
+               tbody.innerHTML += `
+    <tr class="border-b">
+        <td class="p-3">${h.aparelho_imei}</td>
+        <td class="p-3">${formatDateForInput(h.data_vinculacao)}</td>
+        <td class="p-3">${h.data_desvinculacao ? formatDateForInput(h.data_desvinculacao) : 'Atualmente vinculado'}</td>
+    </tr>`;
             });
         } else {
             noHistoryMsg.classList.remove('hidden');
@@ -252,4 +252,5 @@ export function initLinesModule() {
             }
         });
     }
+
 }
