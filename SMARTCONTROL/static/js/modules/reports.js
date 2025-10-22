@@ -5,20 +5,17 @@ import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 
 export function getReportHeader() {
     const info = state.companyInfo;
-    
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Adicionamos !important às regras de 'height' e 'max-width'
-    // para garantir que elas não sejam sobrepostas pelo style.css
-    const logoHtml = info && info.logo 
-        ? `<img src="data:image/png;base64,${info.logo}" alt="Logótipo" style="height:50px !important;max-width:180px !important; object-fit:contain;" onerror="this.style.display='none'">` 
+    const logoHtml = info && info.logo
+        // Aplicamos a classe 'company-logo' e removemos estilos inline exceto object-fit
+        ? `<img src="data:image/png;base64,${info.logo}" alt="Logótipo" class="company-logo" style="object-fit:contain;" onerror="this.style.display='none'">`
         : '';
-    // --- FIM DA CORREÇÃO ---
 
+    // Usamos classes CSS para estrutura
     return `
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:20px;">
-            <div>
-                <h2 style="font-size:16px;font-weight:700;margin:0;">${info && info.nome ? info.nome : 'Relatório do Sistema'}</h2>
-                <p style="font-size:12px;margin:0;">CNPJ: ${info && info.cnpj ? info.cnpj : 'Não informado'}</p>
+        <div class="print-header">
+            <div class="company-info">
+                <h2 class="company-name">${info && info.nome ? info.nome : 'Relatório do Sistema'}</h2>
+                <p class="company-cnpj">CNPJ: ${info && info.cnpj ? info.cnpj : 'Não informado'}</p>
             </div>
             ${logoHtml}
         </div>
@@ -276,4 +273,5 @@ export function initReportsModule() {
     if (reportMaintenanceBtn) reportMaintenanceBtn.addEventListener('click', () => generateMaintenanceReport(reportModal));
 
 }
+
 
