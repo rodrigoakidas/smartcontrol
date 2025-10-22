@@ -32,6 +32,8 @@ def get_employees():
 def add_employee():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         matricula = data.get('id')
         nome = data.get('name')
         cargo = data.get('position')
@@ -77,6 +79,8 @@ def add_employee():
 def update_employee(matricula):
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         nome = data.get('name')
         cargo = data.get('position')
         email = data.get('email')

@@ -39,6 +39,8 @@ def get_lines():
 def add_line():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         numero = data.get('numero')
         operadora = data.get('operadora')
         plano = data.get('plano')
@@ -84,6 +86,8 @@ def add_line():
 def update_line(line_id):
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         operadora = data.get('operadora')
         plano = data.get('plano')
         status = data.get('status')

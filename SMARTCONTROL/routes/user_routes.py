@@ -38,6 +38,8 @@ def create_user():
     """Cria um novo utilizador. Requer permissão 'users_create'."""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         nome = data.get('nome')
         username_to_create = data.get('username')
         senha = data.get('senha')
@@ -83,6 +85,8 @@ def create_user():
 def update_user(user_id_to_update):
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         nome = data.get('nome')
         role = data.get('role')
         senha = data.get('senha')
@@ -133,7 +137,9 @@ def update_user(user_id_to_update):
 @require_permission('users_delete')
 def delete_user(user_id_to_delete):
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        if not data:
+            data = {}
         current_user = data.get('currentUser', {})
         user_id_actor = current_user.get('id')
         username_actor = current_user.get('nome', 'Sistema')

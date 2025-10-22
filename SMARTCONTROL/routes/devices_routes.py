@@ -41,6 +41,8 @@ def get_devices():
 def add_device():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         modelo = data.get('model')
         imei1 = data.get('imei1')
         imei2 = data.get('imei2')
@@ -81,6 +83,8 @@ def add_device():
 def update_device(imei):
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         modelo = data.get('model')
         imei2 = data.get('imei2')
         condicao = data.get('condition')

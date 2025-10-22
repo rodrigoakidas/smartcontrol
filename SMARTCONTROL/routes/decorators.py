@@ -1,5 +1,6 @@
 from functools import wraps
 from flask import request, abort, g, current_app
+from werkzeug.exceptions import HTTPException
 import json
 
 def require_permission(permission_key):
@@ -62,6 +63,8 @@ def require_permission(permission_key):
 
             except Exception as e:
                 current_app.logger.error(f"Erro no decorador require_permission: {e}", exc_info=True)
+                if isinstance(e, HTTPException):
+                    raise e
                 abort(500, description="Erro interno no sistema de permissões.")
                 
         return decorated_function

@@ -52,7 +52,9 @@ def get_maintenance(maint_id):
 @require_permission('maintenance_create')
 def create_maintenance():
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         aparelho_id = data.get('aparelho_id')
         data_envio = data.get('data_envio')
         defeito_reportado = data.get('defeito_reportado')
@@ -106,7 +108,9 @@ def create_maintenance():
 @require_permission('maintenance_update')
 def update_maintenance(maint_id):
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         data_retorno = data.get('data_retorno')
         servico_realizado = data.get('servico_realizado')
         custo = data.get('custo')
@@ -164,7 +168,9 @@ def update_maintenance(maint_id):
 @require_permission('maintenance_delete')
 def delete_maintenance(maint_id):
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        if not data:
+            data = {}
         current_user = data.get('currentUser', {})
 
         if not g.db_cursor:

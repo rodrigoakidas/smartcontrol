@@ -9,8 +9,11 @@ records_bp = Blueprint('records', __name__)
 @records_bp.route('/', methods=['GET'])
 def get_records():
     try:
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 10))
+        try:
+            page = int(request.args.get('page', 1))
+            limit = int(request.args.get('limit', 10))
+        except ValueError:
+            return jsonify({'message': 'Parâmetros de paginação inválidos'}), 400
         offset = (page - 1) * limit
         status_filter = request.args.get('filter', 'Todos')
 
@@ -89,6 +92,8 @@ def update_record(record_id):
     """Atualiza um registo. Requer permissão."""
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         current_user = data.get('currentUser', {})
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
@@ -150,10 +155,12 @@ def update_record(record_id):
 
 # Rota POST para criar (Protegida)
 @records_bp.route('/', methods=['POST'])
-@require_permission('records_create') 
+@require_permission('records_create')
 def create_record():
     try:
         data = request.get_json()
+        if not data:
+            return jsonify({'message': 'Dados inválidos'}), 400
         matricula = data.get('employeeMatricula')
         imei = data.get('deviceImei')
         data_entrega = data.get('deliveryDate')
@@ -224,7 +231,9 @@ def create_record():
 @require_permission('records_delete')
 def delete_record(record_id):
     try:
-        data = request.get_json() or {}
+        data = request.get_json()
+        if not data:
+            data = {}
         current_user = data.get('currentUser', {})
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
