@@ -1,5 +1,5 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO COMPLETA E CORRIGIDA - Inclui Ícones de Anexo e Flag isPrinting)
+// (VERSÃO COMPLETA E CORRIGIDA - Inclui Ícones de Anexo, Flag isPrinting e fetchAllData após submit/delete)
 
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
@@ -14,6 +14,7 @@ function extractTermoIdFromError(errorMessage) {
     return match ? parseInt(match[1], 10) : null;
 }
 
+// Função para mostrar modal de conflito com opções
 function showConflictModal(errorMessage, termoId) {
     const existingModal = document.getElementById('conflict-modal');
     if (existingModal) existingModal.remove();
@@ -51,6 +52,7 @@ function showConflictModal(errorMessage, termoId) {
     }
 }
 
+// Funções globais para o modal de conflito
 window.closeConflictModal = function() {
     const modal = document.getElementById('conflict-modal');
     if (modal) {
@@ -61,36 +63,44 @@ window.closeConflictModal = function() {
 window.viewExistingTermo = async function(termoId) {
     window.closeConflictModal();
     const recordModal = document.getElementById('record-modal');
-    closeModal(recordModal);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    openRecordForm(termoId);
+    closeModal(recordModal); // Fecha o modal de criação/edição atual
+    await new Promise(resolve => setTimeout(resolve, 300)); // Espera fechar
+    openRecordForm(termoId); // Abre o termo existente
 };
 
+// Busca dados E renderiza a tabela para uma página específica
 export async function fetchRecordsPage(page) {
     const { recordsPerPage, filter } = state.mainTable;
     try {
         const data = await fetch(`${API_URL}/api/records?page=${page}&limit=${recordsPerPage}&filter=${filter}`).then(res => res.json());
-        // Garante que currentPage seja atualizado antes de renderizar
-        updateState({ 
+        // Atualiza o estado ANTES de renderizar
+        updateState({
             mainTable: { ...state.mainTable, currentPage: page, totalRecords: data.total },
-            records: data.records 
+            records: data.records
         });
-        renderMainTable(); // Renderiza APENAS AQUI após atualizar o state
+        renderMainTable(); // Renderiza com os dados atualizados
     } catch (error) {
         showToast("Erro ao carregar movimentações.", true);
         console.error("Falha ao buscar registros:", error);
+        // Garante que a tabela seja limpa mesmo em caso de erro
+        const recordsTableBody = document.getElementById('records-table-body');
+        if (recordsTableBody) recordsTableBody.innerHTML = '';
+        renderPaginationControls(); // Atualiza paginação (pode mostrar 0 registos)
     }
 }
 
+// Renderiza APENAS os controlos de paginação com base no state atual
 function renderPaginationControls() {
     const { currentPage, totalRecords, recordsPerPage } = state.mainTable;
     const totalPages = Math.ceil(totalRecords / recordsPerPage);
     const infoEl = document.getElementById('pagination-info');
     const buttonsEl = document.getElementById('pagination-buttons');
 
-    if (!infoEl || !buttonsEl || totalRecords === 0) {
-        if(infoEl) infoEl.innerHTML = '';
-        if(buttonsEl) buttonsEl.innerHTML = '';
+    if (!infoEl || !buttonsEl) return; // Sai se elementos não existem
+
+    if (totalRecords === 0) {
+        infoEl.innerHTML = 'Nenhum registo encontrado.';
+        buttonsEl.innerHTML = '';
         return;
     }
 
@@ -99,36 +109,41 @@ function renderPaginationControls() {
     infoEl.innerHTML = `Mostrando ${startRecord} - ${endRecord} de ${totalRecords} registos`;
 
     let buttonsHTML = '';
-    buttonsHTML += `<button data-page="${currentPage - 1}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+    // Botão Anterior
+    buttonsHTML += `<button data-page="${currentPage - 1}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
 
+    // Lógica de páginas (simplificada para mostrar sempre algumas)
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, currentPage + 2);
 
-    if (currentPage > 3) {
+    if (startPage > 1) {
         buttonsHTML += `<button data-page="1" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300">1</button>`;
-        if (currentPage > 4) buttonsHTML += `<span class="px-3 py-1">...</span>`;
+        if (startPage > 2) buttonsHTML += `<span class="px-3 py-1">...</span>`;
     }
 
     for (let i = startPage; i <= endPage; i++) {
         buttonsHTML += `<button data-page="${i}" class="px-3 py-1 rounded-md ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300'}">${i}</button>`;
     }
 
-    if (currentPage < totalPages - 2) {
-        if (currentPage < totalPages - 3) buttonsHTML += `<span class="px-3 py-1">...</span>`;
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) buttonsHTML += `<span class="px-3 py-1">...</span>`;
         buttonsHTML += `<button data-page="${totalPages}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300">${totalPages}</button>`;
     }
 
-    buttonsHTML += `<button data-page="${currentPage + 1}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300" ${currentPage === totalPages ? 'disabled' : ''}>Próximo</button>`;
+    // Botão Próximo
+    buttonsHTML += `<button data-page="${currentPage + 1}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" ${currentPage === totalPages ? 'disabled' : ''}>Próximo</button>`;
     buttonsEl.innerHTML = buttonsHTML;
 }
 
-// Função para renderizar a tabela principal (COM ÍCONES DE ANEXO)
+// Renderiza APENAS a tabela com base no state.records atual
 export function renderMainTable() {
     const recordsTableBody = document.getElementById('records-table-body');
     const noRecordsMessage = document.getElementById('no-records-message');
-    //console.log("Rendering main table with records:", state.records); // Log para depuração
 
-    if (!recordsTableBody || !noRecordsMessage) return;
+    if (!recordsTableBody || !noRecordsMessage) {
+        console.error("Elementos da tabela principal não encontrados!");
+        return;
+    }
 
     // Limpa a tabela ANTES de adicionar novas linhas
     recordsTableBody.innerHTML = '';
@@ -138,11 +153,12 @@ export function renderMainTable() {
         recordsTableBody.style.display = 'none';
     } else {
         noRecordsMessage.classList.add('hidden');
-        recordsTableBody.style.display = '';
+        recordsTableBody.style.display = ''; // Garante visibilidade
         const getStatusBadge = (s) => s === 'Devolvido' ? { text: 'Devolvido', class: 'bg-green-100 text-green-800' } : { text: 'Em Uso', class: 'bg-blue-100 text-blue-800' };
 
         state.records.forEach(r => {
             const status = getStatusBadge(r.status);
+            // Formatação de data segura
             const deliveryDateFormatted = r.deliveryDate
                 ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR')
                 : 'Data Inválida';
@@ -150,44 +166,52 @@ export function renderMainTable() {
             // Gerar botões de anexo
             let attachmentButtons = '';
             if (r.termo_entrega_url) {
-                attachmentButtons += `<a href="${r.termo_entrega_url}" target="_blank" class="text-blue-600 p-1" title="Ver Termo de Entrega"><i data-lucide="file-text"></i></a>`;
+                attachmentButtons += `<a href="${r.termo_entrega_url}" target="_blank" class="text-blue-600 p-1 hover:text-blue-800" title="Ver Termo de Entrega"><i data-lucide="file-text" class="w-4 h-4"></i></a>`;
             }
             if (r.termo_devolucao_url) {
-                attachmentButtons += `<a href="${r.termo_devolucao_url}" target="_blank" class="text-green-600 p-1" title="Ver Termo de Devolução"><i data-lucide="file-check-2"></i></a>`;
+                attachmentButtons += `<a href="${r.termo_devolucao_url}" target="_blank" class="text-green-600 p-1 hover:text-green-800" title="Ver Termo de Devolução"><i data-lucide="file-check-2" class="w-4 h-4"></i></a>`;
             }
             if (r.bo_url) {
-                attachmentButtons += `<a href="${r.bo_url}" target="_blank" class="text-orange-600 p-1" title="Ver B.O."><i data-lucide="alert-triangle"></i></a>`;
+                attachmentButtons += `<a href="${r.bo_url}" target="_blank" class="text-orange-600 p-1 hover:text-orange-800" title="Ver B.O."><i data-lucide="alert-triangle" class="w-4 h-4"></i></a>`;
             }
 
-            // Adiciona a linha (usando appendChild em vez de innerHTML += para segurança e performance ligeiramente melhor)
+            // Cria e adiciona a linha
             const row = document.createElement('tr');
             row.className = 'border-b hover:bg-gray-50';
             row.innerHTML = `
-                <td class="p-4">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
-                <td class="p-4">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
-                <td class="p-4">${deliveryDateFormatted}</td>
-                <td class="p-4"><span class="px-2 py-1 text-sm font-medium rounded-full ${status.class}">${status.text}</span></td>
-                <td class="p-4 no-print">
-                    <div class="flex justify-center items-center gap-1">
-                        <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1" title="Ver/Editar"><i data-lucide="file-pen-line"></i></button>
-                        ${attachmentButtons} {/* Insere os botões de anexo aqui */}
-                        <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1" title="Imprimir"><i data-lucide="printer"></i></button>
-                        <button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1" title="Excluir"><i data-lucide="trash-2"></i></button>
+                <td class="p-3 align-top">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
+                <td class="p-3 align-top">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
+                <td class="p-3 align-top">${deliveryDateFormatted}</td>
+                <td class="p-3 align-top"><span class="px-2 py-1 text-xs font-medium rounded-full ${status.class}">${status.text}</span></td>
+                <td class="p-3 no-print align-top">
+                    <div class="flex justify-center items-center gap-1 flex-wrap"> {/* flex-wrap adicionado */}
+                        <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1 hover:text-gray-800" title="Ver/Editar"><i data-lucide="file-pen-line" class="w-4 h-4"></i></button>
+                        ${attachmentButtons}
+                        <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1 hover:text-slate-800" title="Imprimir"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                        <button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1 hover:text-red-800" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </td>
             `;
             recordsTableBody.appendChild(row);
-
         });
     }
+    // Renderiza paginação APÓS renderizar a tabela
     renderPaginationControls();
-    if (window.lucide) lucide.createIcons();
+    // Atualiza ícones APÓS renderizar a tabela
+    if (window.lucide) {
+        try {
+            lucide.createIcons();
+        } catch (e) {
+            console.error("Erro ao criar ícones Lucide:", e);
+        }
+    }
 }
 
+// Abre o formulário de registo
 async function openRecordForm(recordId = null) {
-    // ... (código da função inalterado) ...
     const form = document.getElementById('record-form');
     const modal = document.getElementById('record-modal');
+    if (!form || !modal) return;
     form.reset();
     document.getElementById('record-id').value = recordId || '';
 
@@ -196,91 +220,85 @@ async function openRecordForm(recordId = null) {
     const viewDeliveryTermBtn = document.getElementById('viewDeliveryTermBtn');
     const viewReturnTermBtn = document.getElementById('viewReturnTermBtn');
     const viewPoliceReportBtn = document.getElementById('viewPoliceReportBtn');
-    viewDeliveryTermBtn.classList.add('hidden');
-    viewReturnTermBtn.classList.add('hidden');
-    viewPoliceReportBtn.classList.add('hidden');
-    document.getElementById('deliveryTermAttachment').value = '';
-    document.getElementById('returnTermAttachment').value = '';
-    document.getElementById('policeReportAttachment').value = '';
-    document.getElementById('deliveryTermAttachment').disabled = false;
-    document.getElementById('returnTermAttachment').disabled = false;
-    document.getElementById('policeReportAttachment').disabled = false;
+    const deliveryTermInput = document.getElementById('deliveryTermAttachment');
+    const returnTermInput = document.getElementById('returnTermAttachment');
+    const policeReportInput = document.getElementById('policeReportAttachment');
     const returnTermSection = document.getElementById('return-term-attachment-section');
     const policeReportSection = document.getElementById('police-report-attachment-section');
     const returnConditionSelect = document.getElementById('returnCondition');
-    returnTermSection.style.display = 'none';
-    policeReportSection.style.display = 'none';
 
-     if(returnConditionSelect) {
-         returnConditionSelect.onchange = null;
-         returnConditionSelect.onchange = (e) => {
-             const condition = e.target.value;
-             returnTermSection.style.display = condition === 'Bom' || condition === 'Danificado' ? 'block' : 'none';
-             policeReportSection.style.display = condition === 'Perda/Roubo' ? 'block' : 'none';
-         };
-     }
+    // Reset anexo links/inputs
+    [viewDeliveryTermBtn, viewReturnTermBtn, viewPoliceReportBtn].forEach(btn => btn.classList.add('hidden'));
+    [deliveryTermInput, returnTermInput, policeReportInput].forEach(input => { input.value = ''; input.disabled = false; });
+    [returnTermSection, policeReportSection].forEach(section => section.style.display = 'none');
 
+    // Reset listener (se existir) e adiciona de novo
+    if (returnConditionSelect) {
+        const newSelect = returnConditionSelect.cloneNode(true); // Clona para remover listeners antigos
+        returnConditionSelect.parentNode.replaceChild(newSelect, returnConditionSelect);
+        newSelect.addEventListener('change', (e) => {
+            const condition = e.target.value;
+            returnTermSection.style.display = condition === 'Bom' || condition === 'Danificado' ? 'block' : 'none';
+            policeReportSection.style.display = condition === 'Perda/Roubo' ? 'block' : 'none';
+        });
+    }
+
+    // Lógica EDIÇÃO
     if (recordId) {
         document.getElementById('modal-title').textContent = "Ver/Editar Termo";
         document.getElementById('delivery-fieldset').querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = true);
-        document.getElementById('deliveryTermAttachment').disabled = false;
+        deliveryTermInput.disabled = false; // Permite sempre anexar termo entrega
         document.getElementById('return-fieldset').classList.remove('hidden');
-        document.getElementById('return-fieldset').querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = false);
+        document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false); // Habilita TODOS, incluindo file inputs
 
         try {
             const data = await fetchItemById('records', recordId);
-            if (!data) { closeModal(modal); return; }
+            if (!data) { closeModal(modal); showToast("Termo não encontrado.", true); return; }
 
-            const employeeData = state.employees.find(e => e.id === data.employeeMatricula);
-            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected>${employeeData ? `${employeeData.name} (${employeeData.id})` : data.employeeMatricula}</option>`;
-            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected>${data.deviceModel} (${data.deviceImei})</option>`;
+            // Preenche dados entrega (view only)
+            const employeeData = state.employees.find(e => e.id === data.employeeMatricula); // Usa matricula
+            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`;
+            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`;
             document.getElementById('deviceLineDisplay').value = data.deviceLine || 'Nenhuma';
             document.getElementById('deliveryDate').value = formatDateForInput(data.data_entrega);
             document.getElementById('deliveryCondition').value = data.condicao_entrega || '';
             document.getElementById('deliveryNotes').value = data.notas_entrega || '';
             document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
             if (data.acessorios && Array.isArray(data.acessorios)) {
-                 data.acessorios.forEach(acc => {
-                     const cb = form.querySelector(`input[name="accessories"][value="${acc}"]`);
-                     if (cb) cb.checked = true;
-                 });
+                data.acessorios.forEach(acc => {
+                    const cb = form.querySelector(`input[name="accessories"][value="${acc}"]`);
+                    if (cb) cb.checked = true;
+                });
             }
-
             if (data.termo_entrega_url) {
                 viewDeliveryTermBtn.href = data.termo_entrega_url;
                 viewDeliveryTermBtn.classList.remove('hidden');
-            } else {
-                 viewDeliveryTermBtn.classList.add('hidden');
             }
 
+            // Preenche dados devolução (editáveis)
             document.getElementById('returnDate').value = formatDateForInput(data.data_devolucao);
-            document.getElementById('returnCondition').value = data.condicao_devolucao || '';
+            const currentReturnConditionSelect = document.getElementById('returnCondition'); // Pega o select atualizado
+            currentReturnConditionSelect.value = data.condicao_devolucao || '';
             document.getElementById('returnNotes').value = data.notas_devolucao || '';
             document.getElementById('returnChecker').value = data.return_checker || '';
-
-             if (data.termo_devolucao_url) {
+            if (data.termo_devolucao_url) {
                 viewReturnTermBtn.href = data.termo_devolucao_url;
                 viewReturnTermBtn.classList.remove('hidden');
-            } else {
-                 viewReturnTermBtn.classList.add('hidden');
             }
-
             if (data.bo_url) {
                 viewPoliceReportBtn.href = data.bo_url;
                 viewPoliceReportBtn.classList.remove('hidden');
-            } else {
-                 viewPoliceReportBtn.classList.add('hidden');
             }
-
-             if (returnConditionSelect) returnConditionSelect.dispatchEvent(new Event('change'));
+            // Dispara o evento 'change' para mostrar/esconder anexos corretos
+            currentReturnConditionSelect.dispatchEvent(new Event('change'));
 
         } catch (error) {
-             showToast("Erro ao carregar detalhes do termo.", true);
-             console.error("Erro ao buscar detalhes para edição:", error);
-             closeModal(modal);
-             return;
+            showToast("Erro ao carregar detalhes do termo.", true);
+            console.error("Erro ao buscar detalhes para edição:", error);
+            closeModal(modal); return;
         }
 
+    // Lógica NOVO TERMO
     } else {
         document.getElementById('modal-title').textContent = "Novo Termo de Responsabilidade";
         document.getElementById('delivery-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
@@ -294,6 +312,9 @@ async function openRecordForm(recordId = null) {
         state.devices.filter(d => d.status === 'Disponível').forEach(d => {
             deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
         });
+        if (deviceSelect.options.length <= 1) { // Apenas a opção "Selecione..."
+            deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
+        }
 
         document.getElementById('deliveryDate').value = formatDateForInput(new Date());
         document.getElementById('deliveryCondition').value = 'Novo';
@@ -304,9 +325,11 @@ async function openRecordForm(recordId = null) {
     openModal(modal);
 }
 
+
+// Gera HTML para impressão (ULTRA COMPACTA COM CLASSES)
 function generatePrintableTermHTML(data) {
     // ... (código da função ultra compacta inalterado) ...
-    const accessories = data.acessorios || data.accessories || [];
+     const accessories = data.acessorios || data.accessories || [];
     const accessoriesList = accessories.length > 0 ? accessories.join(', ') : 'Nenhum';
     const deliveryDateStr = data.data_entrega || data.deliveryDate;
     const deliveryDate = deliveryDateStr ? new Date(deliveryDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Data Inválida';
@@ -373,7 +396,7 @@ function generatePrintableTermHTML(data) {
 
 // Função auxiliar para imprimir (COM FLAG isPrinting)
 async function printSingleRecord(recordOrData) {
-    if (isPrinting) { console.log("Impressão já em andamento, ignorando."); return; }
+    if (isPrinting) { console.warn("Impressão já em andamento, ignorando."); return; }
     isPrinting = true;
     showToast('A gerar termo para impressão...');
     let recordDataToPrint;
@@ -396,7 +419,7 @@ async function printSingleRecord(recordOrData) {
         showToast(`Erro ao imprimir: ${error.message}`, true);
         console.error("Erro ao imprimir termo:", error);
     } finally {
-        setTimeout(() => { isPrinting = false; }, 500);
+        setTimeout(() => { isPrinting = false; }, 500); // Reseta flag após timeout
     }
 }
 
@@ -405,7 +428,7 @@ export function initRecordsModule() {
     const recordModal = document.getElementById('record-modal');
     const recordForm = document.getElementById('record-form');
     const deviceSelect = document.getElementById('deviceSelect');
-    let isSubmitting = false;
+    let isSubmitting = false; // Flag para submit
 
     if (deviceSelect) {
         deviceSelect.addEventListener('change', (e) => {
@@ -422,140 +445,193 @@ export function initRecordsModule() {
     const cancelBtn = document.getElementById('cancel-btn');
     if (cancelBtn) { cancelBtn.addEventListener('click', () => closeModal(recordModal)); }
 
+    // Listener botões filtro
     const filterContainer = document.getElementById('filter-container');
     if (filterContainer) {
         filterContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.filter-btn');
-            if (!button) return;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-gray-200'));
+            if (!button || button.disabled) return;
+            // Atualiza UI dos botões
+            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.replace('bg-blue-600', 'bg-gray-200');
+                btn.classList.replace('text-white', 'text-gray-700');
+                btn.disabled = false;
+            });
             button.classList.replace('bg-gray-200', 'bg-blue-600');
-            state.mainTable.filter = button.dataset.filter;
-            fetchRecordsPage(1); // Chama fetchRecordsPage que atualiza state E renderiza
+            button.classList.replace('text-gray-700', 'text-white');
+            button.disabled = true; // Desabilita o botão ativo
+
+            // Atualiza state e busca dados
+            const newFilter = button.dataset.filter;
+            if (state.mainTable.filter !== newFilter) {
+                 updateState({ mainTable: { ...state.mainTable, filter: newFilter } });
+                 fetchRecordsPage(1); // Volta para a página 1 ao mudar filtro
+            }
         });
+         // Inicializa o botão de filtro correto no carregamento
+         const initialFilter = state.mainTable.filter || 'Todos';
+         const activeButton = filterContainer.querySelector(`.filter-btn[data-filter="${initialFilter}"]`);
+         if (activeButton) {
+            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.replace('bg-blue-600', 'bg-gray-200');
+                btn.classList.replace('text-white', 'text-gray-700');
+                btn.disabled = false;
+            });
+             activeButton.classList.replace('bg-gray-200', 'bg-blue-600');
+             activeButton.classList.replace('text-gray-700', 'text-white');
+             activeButton.disabled = true;
+         }
     }
 
+
+    // Listener botões tabela principal (View, Anexos, Print, Delete)
     const recordsTableBody = document.getElementById('records-table-body');
     if (recordsTableBody) {
         recordsTableBody.addEventListener('click', async (e) => {
-            const button = e.target.closest('button[data-action], a[data-action]'); // Inclui links 'a'
+            // Target pode ser o botão ou o ícone dentro dele
+            const button = e.target.closest('button[data-action], a'); // 'a' para links de anexo
+
             if (!button) return;
 
             // Previne ação padrão SE FOR UM LINK (para não navegar)
-            if (button.tagName === 'A') {
-                e.preventDefault();
-            }
+            // mas permite se for botão (caso haja algum comportamento padrão futuro)
+            if (button.tagName === 'A' && button.hasAttribute('href')) {
+               // Deixa o link funcionar normalmente (abrir em nova aba)
+            } else {
+                 e.preventDefault(); // Previne ação padrão para BOTÕES
+                 const id = button.dataset.id;
+                 const action = button.dataset.action;
 
-            const id = button.dataset.id;
-            const action = button.dataset.action;
-
-            if (action === 'view-record') {
-                openRecordForm(id);
-            } else if (action === 'print-record') {
-                printSingleRecord(id); // Chama a função com flag
-            } else if (action === 'delete-record') {
-                if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
-                try {
-                    const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
-                    const result = await res.json();
-                    if (!res.ok) throw new Error(result.message);
-                    showToast("Registo apagado.");
-                    await fetchAllData(); // Recarrega tudo
-                } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
+                 if (action === 'view-record') {
+                     openRecordForm(id);
+                 } else if (action === 'print-record') {
+                     printSingleRecord(id);
+                 } else if (action === 'delete-record') {
+                     if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
+                     try {
+                         const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
+                         const result = await res.json();
+                         if (!res.ok) throw new Error(result.message);
+                         showToast("Registo apagado.");
+                         await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
+                     } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
+                 }
             }
-            // Não precisa de 'else' para os links de anexo, o clique padrão já abre em nova aba
         });
     }
 
+    // Listener botões paginação
     const paginationControls = document.getElementById('pagination-controls');
     if(paginationControls) {
         paginationControls.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-page]');
             if (!button || button.disabled) return;
-            fetchRecordsPage(parseInt(button.dataset.page, 10)); // Chama fetchRecordsPage que atualiza state E renderiza
+            const pageToGo = parseInt(button.dataset.page, 10);
+            if (pageToGo !== state.mainTable.currentPage) {
+                 fetchRecordsPage(pageToGo);
+            }
         });
     }
 
+    // Listener submit do formulário (Criar/Editar)
     if (recordForm) {
         recordForm.addEventListener('submit', async (e) => {
-            // ... (código do submit inalterado, já chama fetchAllData) ...
-             e.preventDefault();
+            e.preventDefault();
             if (isSubmitting) { console.warn("Submissão já em progresso."); return; }
             isSubmitting = true;
+
             const saveButton = recordForm.querySelector('button[type="submit"]');
             const recordId = document.getElementById('record-id').value;
             const isEditing = !!recordId;
             setLoading(saveButton);
             let success = false;
-            let printData = null;
+            let createdRecordDataForPrint = null; // Renomeado para clareza
 
             try {
+                // Uploads primeiro
                 const deliveryTermFile = document.getElementById('deliveryTermAttachment');
                 const returnTermFile = document.getElementById('returnTermAttachment');
                 const policeReportFile = document.getElementById('policeReportAttachment');
                 const deliveryTermUrl = deliveryTermFile.files.length > 0 ? await handleFileUpload(deliveryTermFile) : null;
                 const returnTermUrl = returnTermFile.files.length > 0 ? await handleFileUpload(returnTermFile) : null;
                 const policeReportUrl = policeReportFile.files.length > 0 ? await handleFileUpload(policeReportFile) : null;
+
+                // Monta payload
                 let recordData;
                 if (isEditing) {
                      recordData = { returnDate: document.getElementById('returnDate').value || null, returnCondition: document.getElementById('returnCondition').value || null, returnNotes: document.getElementById('returnNotes').value, returnChecker: document.getElementById('returnChecker').value || state.currentUser?.nome || null, currentUser: state.currentUser, ...(deliveryTermUrl && { deliveryTermUrl: deliveryTermUrl }), ...(returnTermUrl && { returnTermUrl: returnTermUrl }), ...(policeReportUrl && { policeReportUrl: policeReportUrl }), };
                 } else {
-                     recordData = { employeeMatricula: document.getElementById('employeeSelect').value, deviceImei: document.getElementById('deviceSelect').value, deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), deliveryChecker: state.currentUser.nome, currentUser: state.currentUser, deliveryTermUrl: deliveryTermUrl, };
+                     recordData = { employeeMatricula: document.getElementById('employeeSelect').value, deviceImei: document.getElementById('deviceSelect').value, deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), deliveryChecker: state.currentUser?.nome || 'Sistema', currentUser: state.currentUser, deliveryTermUrl: deliveryTermUrl }; // Garante deliveryChecker
                      if (!recordData.employeeMatricula || !recordData.deviceImei || !recordData.deliveryDate) { throw new Error("Funcionário, Aparelho e Data de Entrega são obrigatórios."); }
                 }
+
+                // Envia request
                 const url = isEditing ? `${API_URL}/api/records/${recordId}` : `${API_URL}/api/records/`;
                 const method = isEditing ? 'PUT' : 'POST';
                 const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordData) });
                 const result = await res.json();
                 if (!res.ok) { console.error("Erro na resposta do servidor:", res.status, result); throw new Error(result.message || `Erro ${res.status}`); }
+
+                // Sucesso
                 success = true;
                 showToast(result.message);
+
+                // Prepara dados para impressão SE FOR CRIAÇÃO
                 if (method === 'POST' && result.newRecord) {
-                     const employee = state.employees.find(e => e.id === recordData.employeeMatricula);
-                     printData = { ...result.newRecord, deliveryDate: recordData.deliveryDate, deliveryCondition: recordData.deliveryCondition, deliveryNotes: recordData.deliveryNotes, accessories: recordData.accessories, delivery_checker: recordData.deliveryChecker, employeePosition: employee?.position || 'N/A' };
+                     const employee = state.employees.find(e => e.id === recordData.employeeMatricula); // Usa matricula
+                     createdRecordDataForPrint = { ...result.newRecord, deliveryDate: recordData.deliveryDate, deliveryCondition: recordData.deliveryCondition, deliveryNotes: recordData.deliveryNotes, accessories: recordData.accessories, delivery_checker: recordData.deliveryChecker, employeePosition: employee?.position || 'N/A' };
                 }
-                await fetchAllData(); // Chama fetchAllData que chama fetchRecordsPage que renderiza
-                closeModal(recordModal);
+
+                closeModal(recordModal); // Fecha modal ANTES de recarregar dados
+                await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
+
             } catch (error) {
                 console.error("Erro ao salvar o termo:", error);
+                success = false; // Garante que não imprima em caso de erro
                 if (error.message && error.message.includes('já está associado ao termo')) {
                     const termoId = extractTermoIdFromError(error.message);
-                    if (termoId) { showConflictModal(error.message, termoId); } else { showToast(error.message, true); }
+                    if (termoId) { showConflictModal(error.message, termoId); }
+                    else { showToast(error.message, true); }
                 } else { showToast(`Erro ao salvar: ${error.message}`, true); }
-                success = false;
             } finally {
                 unsetLoading(saveButton);
                 isSubmitting = false;
-                if (success && printData) {
+
+                // Imprime SE foi sucesso E SE criou um novo registo
+                if (success && createdRecordDataForPrint) {
                     try {
-                        await printSingleRecord(printData); // Chama a função com flag
+                        await printSingleRecord(createdRecordDataForPrint); // Chama com os dados preparados
                     } catch (printError) { console.error("Erro durante a impressão automática:", printError); showToast("Termo salvo, mas houve erro ao gerar a impressão.", true); }
                 }
             }
         });
     }
 
+    // Listener botão Imprimir DENTRO do modal (COM FLAG isPrinting)
     const printTermBtn = document.getElementById('print-term-btn');
     if(printTermBtn) {
         printTermBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            if (isPrinting) { console.log("Impressão já em andamento, ignorando."); return; }
+            if (isPrinting) { console.warn("Impressão já em andamento, ignorando."); return; }
+
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
-                printSingleRecord(parseInt(recordId, 10)); // Chama a função com flag
+                printSingleRecord(parseInt(recordId, 10)); // Edição: busca dados frescos
             } else {
-                 isPrinting = true; // Define flag para "Novo Termo"
+                 // Novo Termo: imprime com dados do form
+                 isPrinting = true; // Define flag aqui
                  try {
                      const employeeSelect = document.getElementById('employeeSelect');
                      const deviceSelect = document.getElementById('deviceSelect');
-                     const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value);
+                     const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value); // Usa matricula
                      const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
-                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); return; }
+                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); return; } // Validação
                      const formDataForPrint = { id: 'Novo', employeeName: selectedEmployee.name, employeeMatricula: selectedEmployee.id, employeePosition: selectedEmployee.position, deviceModel: selectedDevice.model, deviceImei: selectedDevice.imei1, deviceLine: document.getElementById('deviceLineDisplay').value || 'N/A', deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), delivery_checker: state.currentUser?.nome || 'N/A', data_devolucao: null, condicao_devolucao: null, notas_devolucao: null, return_checker: null };
                      const content = generatePrintableTermHTML(formDataForPrint);
                      printContent(content);
                  } finally {
-                    setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
+                     setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
                  }
             }
         });
