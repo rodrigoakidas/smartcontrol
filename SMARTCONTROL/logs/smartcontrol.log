@@ -5,3 +5,6 @@
 2025-10-22 12:09:10,082 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\smartcontrol\SMARTCONTROL\routes\upload_routes.py:48]
 2025-10-22 12:09:35,282 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\smartcontrol\SMARTCONTROL\routes\upload_routes.py:48]
 2025-10-22 12:09:35,283 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\smartcontrol\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 14:35:04,179 INFO: SMARTCONTROL startup [in D:\APP\smartcontrol\SMARTCONTROL\app.py:55]
+2025-10-22 14:35:30,262 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\smartcontrol\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 14:35:30,262 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\smartcontrol\SMARTCONTROL\routes\auth_routes.py:62]
