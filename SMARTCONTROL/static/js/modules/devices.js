@@ -44,17 +44,17 @@ function renderDeviceTable(deviceTableBody, noDevicesMessage, devicesToRender = 
 
 function openDeviceForm(deviceFormModal, deviceForm, imei = null) {
     deviceForm.reset();
-    document.getElementById('device-id-input').value = imei || '';
     const imeiInput = document.getElementById('deviceFormImei1');
     const lineSelect = document.getElementById('deviceFormLine');
     lineSelect.innerHTML = '<option value="">Nenhuma</option>';
-    
+
     state.lines.filter(l => l.status === 'Ativa' && (!l.imeiVinculado || (imei && l.imeiVinculado === imei))).forEach(line => {
         lineSelect.innerHTML += `<option value="${line.id}">${line.numero} (${line.operadora})</option>`;
     });
 
     if (imei) {
         const device = state.devices.find(d => d.imei1 === imei);
+        document.getElementById('device-id-input').value = device.id;
         document.getElementById('device-modal-title').textContent = "Editar Aparelho";
         imeiInput.value = device.imei1;
         imeiInput.readOnly = true;
@@ -65,6 +65,7 @@ function openDeviceForm(deviceFormModal, deviceForm, imei = null) {
         const linkedLine = state.lines.find(l => l.imeiVinculado === imei);
         if (linkedLine) lineSelect.value = linkedLine.id;
     } else {
+        document.getElementById('device-id-input').value = '';
         document.getElementById('device-modal-title').textContent = "Novo Aparelho";
         imeiInput.readOnly = false;
     }
@@ -174,6 +175,7 @@ export function initDevicesModule() {
             const isEditing = !!imeiOriginal;
             
             const deviceData = {
+                deviceId: document.getElementById('device-id-input').value,
                 model: document.getElementById('deviceFormModel').value,
                 imei1: document.getElementById('deviceFormImei1').value,
                 imei2: document.getElementById('deviceFormImei2').value,
@@ -183,14 +185,14 @@ export function initDevicesModule() {
                 currentUser: state.currentUser
             };
 
-            const url = isEditing ? `${API_URL}/api/devices/${imeiOriginal}` : `${API_URL}/api/devices/`;
+            const url = isEditing ? `${API_URL}/api/devices/${deviceData.deviceId}` : `${API_URL}/api/devices/`;
             const method = isEditing ? 'PUT' : 'POST';
 
             try {
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(deviceData) });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.message);
-                
+
                 showToast(result.message);
                 await fetchAllData();
                 renderDeviceTable(deviceTableBody, noDevicesMessage);

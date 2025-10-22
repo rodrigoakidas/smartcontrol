@@ -78,9 +78,9 @@ def add_device():
         current_app.logger.error(f"Erro ao adicionar aparelho: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao adicionar aparelho'}), 500
 
-@devices_bp.route('/<string:imei>', methods=['PUT'])
+@devices_bp.route('/<int:device_id>', methods=['PUT'])
 @require_permission('devices_update')
-def update_device(imei):
+def update_device(device_id):
     try:
         data = request.get_json()
         if not data:
@@ -97,27 +97,27 @@ def update_device(imei):
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
-        g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei,))
+        g.db_cursor.execute("SELECT * FROM aparelhos WHERE id = %s", (device_id,))
         old_data = g.db_cursor.fetchone()
 
         g.db_cursor.execute(
-            "UPDATE aparelhos SET modelo = %s, imei2 = %s, condicao = %s, observacoes = %s, linha_id = %s WHERE imei1 = %s",
-            (modelo, imei2, condicao, observacoes, linha_id if linha_id else None, imei)
+            "UPDATE aparelhos SET modelo = %s, imei2 = %s, condicao = %s, observacoes = %s, linha_id = %s WHERE id = %s",
+            (modelo, imei2, condicao, observacoes, linha_id if linha_id else None, device_id)
         )
         g.db_conn.commit()
-        
+
         if g.db_cursor.rowcount == 0:
             return jsonify({'message': 'Aparelho não encontrado'}), 404
 
         log_change(
             user_id=user_id, username=username, action_type='UPDATE',
-            target_resource='Device', target_id=imei,
+            target_resource='Device', target_id=str(device_id),
             details_dict={'message': 'Aparelho atualizado.', 'old_data': old_data, 'new_data': data}
         )
         return jsonify({'message': 'Aparelho atualizado com sucesso'})
     except Exception as e:
         if g.db_conn: g.db_conn.rollback()
-        current_app.logger.error(f"Erro ao atualizar aparelho {imei}: {e}", exc_info=True)
+        current_app.logger.error(f"Erro ao atualizar aparelho {device_id}: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao atualizar aparelho'}), 500
 
 @devices_bp.route('/<string:imei>', methods=['DELETE'])
