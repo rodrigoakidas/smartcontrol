@@ -1,23 +1,26 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO CORRIGIDA)
+// (VERSÃO COM FLAG isPrinting PARA EVITAR IMPRESSÃO DUPLA)
 
-// CORREÇÃO: Importar 'fetchAllData'
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
 import { API_URL, fetchItemById, handleFileUpload } from './api.js';
 import { getReportHeader, printContent } from './reports.js';
 
+// --- ADICIONADO: Flag para controlar impressão ---
+let isPrinting = false;
+// --- FIM DA ADIÇÃO ---
+
 function extractTermoIdFromError(errorMessage) {
+    // ... (código da função inalterado) ...
     const match = errorMessage.match(/Nº\s*(\d+)/);
     return match ? parseInt(match[1], 10) : null;
 }
 
-// Função para mostrar modal de conflito com opções
 function showConflictModal(errorMessage, termoId) {
-    // Remove modais de conflito anteriores se existirem
+    // ... (código da função inalterado) ...
     const existingModal = document.getElementById('conflict-modal');
     if (existingModal) existingModal.remove();
-    
+
     const modalHTML = `
         <div id="conflict-modal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" style="display: flex;">
             <div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -45,74 +48,62 @@ function showConflictModal(errorMessage, termoId) {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Inicializa os ícones do Lucide
     if (window.lucide) {
         lucide.createIcons();
     }
 }
 
-// Funções globais para o modal de conflito
 window.closeConflictModal = function() {
+    // ... (código da função inalterado) ...
     const modal = document.getElementById('conflict-modal');
     if (modal) {
         modal.remove();
     }
-}
+};
 
 window.viewExistingTermo = async function(termoId) {
+    // ... (código da função inalterado) ...
     window.closeConflictModal();
     const recordModal = document.getElementById('record-modal');
     closeModal(recordModal);
-    
-    // Aguarda um momento para fechar o modal atual
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Abre o termo existente
     openRecordForm(termoId);
-}
+};
 
-
-// Função para buscar uma página específica de registos
 export async function fetchRecordsPage(page) {
+    // ... (código da função inalterado) ...
     const { recordsPerPage, filter } = state.mainTable;
     try {
         const data = await fetch(`${API_URL}/api/records?page=${page}&limit=${recordsPerPage}&filter=${filter}`).then(res => res.json());
-
-        // Atualiza o estado global com os dados recebidos
         state.mainTable.currentPage = page;
         state.mainTable.totalRecords = data.total;
         state.records = data.records;
-
-        renderMainTable(); // Re-renderiza a tabela principal
+        renderMainTable();
     } catch (error) {
         showToast("Erro ao carregar movimentações.", true);
         console.error("Falha ao buscar registros:", error);
     }
 }
 
-// Função para renderizar os controlos de paginação
 function renderPaginationControls() {
+    // ... (código da função inalterado) ...
     const { currentPage, totalRecords, recordsPerPage } = state.mainTable;
     const totalPages = Math.ceil(totalRecords / recordsPerPage);
     const infoEl = document.getElementById('pagination-info');
     const buttonsEl = document.getElementById('pagination-buttons');
 
-    // Limpa controlos se não houver registos
     if (!infoEl || !buttonsEl || totalRecords === 0) {
         if(infoEl) infoEl.innerHTML = '';
         if(buttonsEl) buttonsEl.innerHTML = '';
         return;
     }
 
-    // Informação de registos mostrados
     const startRecord = (currentPage - 1) * recordsPerPage + 1;
     const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
     infoEl.innerHTML = `Mostrando ${startRecord} - ${endRecord} de ${totalRecords} registos`;
 
-    // Lógica para gerar botões de paginação (Anterior, números, Próximo)
     let buttonsHTML = '';
     buttonsHTML += `<button data-page="${currentPage - 1}" class="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
 
@@ -137,33 +128,26 @@ function renderPaginationControls() {
     buttonsEl.innerHTML = buttonsHTML;
 }
 
-// Função para renderizar a tabela principal de registos
 export function renderMainTable() {
+    // ... (código da função inalterado, incluindo a correção da data) ...
     const recordsTableBody = document.getElementById('records-table-body');
     const noRecordsMessage = document.getElementById('no-records-message');
     if (!recordsTableBody || !noRecordsMessage) return;
 
-    recordsTableBody.innerHTML = ''; // Limpa tabela
-    if (!state.records || state.records.length === 0) { // Verifica se state.records existe
+    recordsTableBody.innerHTML = '';
+    if (!state.records || state.records.length === 0) {
         noRecordsMessage.classList.remove('hidden');
         recordsTableBody.style.display = 'none';
     } else {
         noRecordsMessage.classList.add('hidden');
-        recordsTableBody.style.display = ''; // Garante que a tabela é visível
+        recordsTableBody.style.display = '';
         const getStatusBadge = (s) => s === 'Devolvido' ? { text: 'Devolvido', class: 'bg-green-100 text-green-800' } : { text: 'Em Uso', class: 'bg-blue-100 text-blue-800' };
 
-        // Preenche a tabela com os dados
         state.records.forEach(r => {
             const status = getStatusBadge(r.status);
-            
-            // --- CORREÇÃO APLICADA AQUI ---
-            // Trocamos 'new Date(r.deliveryDate + 'T00:00:00')'
-            // por 'new Date(r.deliveryDate.replace(/-/g, '/'))'
-            // para evitar problemas de fuso horário e datas inválidas.
-            const deliveryDateFormatted = r.deliveryDate 
-                ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR') 
+            const deliveryDateFormatted = r.deliveryDate
+                ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR')
                 : 'Data Inválida';
-            // --- FIM DA CORREÇÃO ---
 
             recordsTableBody.innerHTML += `
                 <tr class="border-b hover:bg-gray-50">
@@ -175,49 +159,39 @@ export function renderMainTable() {
                 </tr>`;
         });
     }
-    renderPaginationControls(); // Atualiza controlos de paginação
-    if (window.lucide) lucide.createIcons(); // Atualiza ícones
+    renderPaginationControls();
+    if (window.lucide) lucide.createIcons();
 }
 
-// Função para abrir o formulário de registo (novo ou edição)
 async function openRecordForm(recordId = null) {
+    // ... (código da função inalterado) ...
     const form = document.getElementById('record-form');
     const modal = document.getElementById('record-modal');
-    form.reset(); // Limpa o formulário
-    document.getElementById('record-id').value = recordId || ''; // Define o ID (ou vazio se for novo)
+    form.reset();
+    document.getElementById('record-id').value = recordId || '';
 
     const employeeSelect = document.getElementById('employeeSelect');
     const deviceSelect = document.getElementById('deviceSelect');
-
-    // Elementos dos links "Ver Anexo"
     const viewDeliveryTermBtn = document.getElementById('viewDeliveryTermBtn');
     const viewReturnTermBtn = document.getElementById('viewReturnTermBtn');
     const viewPoliceReportBtn = document.getElementById('viewPoliceReportBtn');
-    viewDeliveryTermBtn.classList.add('hidden'); // Esconde links por padrão
+    viewDeliveryTermBtn.classList.add('hidden');
     viewReturnTermBtn.classList.add('hidden');
     viewPoliceReportBtn.classList.add('hidden');
-
-    // Limpa seleções de ficheiros anteriores
     document.getElementById('deliveryTermAttachment').value = '';
     document.getElementById('returnTermAttachment').value = '';
     document.getElementById('policeReportAttachment').value = '';
-
-    // Habilita inputs de ficheiro por padrão
     document.getElementById('deliveryTermAttachment').disabled = false;
     document.getElementById('returnTermAttachment').disabled = false;
     document.getElementById('policeReportAttachment').disabled = false;
-
-    // Controla a visibilidade das secções de anexo de devolução
     const returnTermSection = document.getElementById('return-term-attachment-section');
     const policeReportSection = document.getElementById('police-report-attachment-section');
     const returnConditionSelect = document.getElementById('returnCondition');
-
-    returnTermSection.style.display = 'none'; // Esconde por padrão
+    returnTermSection.style.display = 'none';
     policeReportSection.style.display = 'none';
 
-    // Listener para mostrar/esconder campos de anexo de devolução conforme a condição
      if(returnConditionSelect) {
-         returnConditionSelect.onchange = null; // Remove listener antigo
+         returnConditionSelect.onchange = null;
          returnConditionSelect.onchange = (e) => {
              const condition = e.target.value;
              returnTermSection.style.display = condition === 'Bom' || condition === 'Danificado' ? 'block' : 'none';
@@ -225,30 +199,24 @@ async function openRecordForm(recordId = null) {
          };
      }
 
-    // Lógica para modo EDIÇÃO
     if (recordId) {
         document.getElementById('modal-title').textContent = "Ver/Editar Termo";
-        // Desabilita campos de entrega (exceto upload de anexo)
         document.getElementById('delivery-fieldset').querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = true);
-        document.getElementById('deliveryTermAttachment').disabled = false; // Permite anexar mesmo editando
-
-        document.getElementById('return-fieldset').classList.remove('hidden'); // Mostra secção de devolução
-        // Habilita campos de devolução para edição
+        document.getElementById('deliveryTermAttachment').disabled = false;
+        document.getElementById('return-fieldset').classList.remove('hidden');
         document.getElementById('return-fieldset').querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = false);
 
         try {
-            const data = await fetchItemById('records', recordId); // Busca dados do registo
-            if (!data) { closeModal(modal); return; } // Fecha se não encontrar
+            const data = await fetchItemById('records', recordId);
+            if (!data) { closeModal(modal); return; }
 
-            // Preenche dados de entrega (não editáveis)
             const employeeData = state.employees.find(e => e.id === data.employeeMatricula);
             employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected>${employeeData ? `${employeeData.name} (${employeeData.id})` : data.employeeMatricula}</option>`;
             deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected>${data.deviceModel} (${data.deviceImei})</option>`;
             document.getElementById('deviceLineDisplay').value = data.deviceLine || 'Nenhuma';
             document.getElementById('deliveryDate').value = formatDateForInput(data.data_entrega);
-            document.getElementById('deliveryCondition').value = data.condicao_entrega || ''; // Default para vazio se null
+            document.getElementById('deliveryCondition').value = data.condicao_entrega || '';
             document.getElementById('deliveryNotes').value = data.notas_entrega || '';
-             // Marca os acessórios
             document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
             if (data.acessorios && Array.isArray(data.acessorios)) {
                  data.acessorios.forEach(acc => {
@@ -257,7 +225,6 @@ async function openRecordForm(recordId = null) {
                  });
             }
 
-            // Mostra link do termo de entrega se existir
             if (data.termo_entrega_url) {
                 viewDeliveryTermBtn.href = data.termo_entrega_url;
                 viewDeliveryTermBtn.classList.remove('hidden');
@@ -265,13 +232,11 @@ async function openRecordForm(recordId = null) {
                  viewDeliveryTermBtn.classList.add('hidden');
             }
 
-            // Preenche dados de devolução (editáveis)
             document.getElementById('returnDate').value = formatDateForInput(data.data_devolucao);
             document.getElementById('returnCondition').value = data.condicao_devolucao || '';
             document.getElementById('returnNotes').value = data.notas_devolucao || '';
             document.getElementById('returnChecker').value = data.return_checker || '';
 
-            // Mostra link do termo de devolução se existir
              if (data.termo_devolucao_url) {
                 viewReturnTermBtn.href = data.termo_devolucao_url;
                 viewReturnTermBtn.classList.remove('hidden');
@@ -279,7 +244,6 @@ async function openRecordForm(recordId = null) {
                  viewReturnTermBtn.classList.add('hidden');
             }
 
-            // Mostra link do BO se existir
             if (data.bo_url) {
                 viewPoliceReportBtn.href = data.bo_url;
                 viewPoliceReportBtn.classList.remove('hidden');
@@ -287,7 +251,6 @@ async function openRecordForm(recordId = null) {
                  viewPoliceReportBtn.classList.add('hidden');
             }
 
-             // Dispara o evento 'change' no select de condição para mostrar/esconder anexos corretamente
              if (returnConditionSelect) returnConditionSelect.dispatchEvent(new Event('change'));
 
         } catch (error) {
@@ -298,48 +261,35 @@ async function openRecordForm(recordId = null) {
         }
 
     } else {
-        // Lógica para modo NOVO TERMO
         document.getElementById('modal-title').textContent = "Novo Termo de Responsabilidade";
-        // Habilita campos de entrega
         document.getElementById('delivery-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
-        document.getElementById('return-fieldset').classList.add('hidden'); // Esconde secção de devolução
-        // Desabilita campos de devolução
+        document.getElementById('return-fieldset').classList.add('hidden');
         document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = true);
 
-        // Preenche dropdowns com opções
         employeeSelect.innerHTML = '<option value="">Selecione...</option>';
         state.employees.forEach(e => employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`);
 
         deviceSelect.innerHTML = '<option value="">Selecione...</option>';
-        // Filtra apenas aparelhos 'Disponível'
         state.devices.filter(d => d.status === 'Disponível').forEach(d => {
             deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
         });
 
-        // Preenche valores padrão para novo termo
-        document.getElementById('deliveryDate').value = formatDateForInput(new Date()); // Data atual
+        document.getElementById('deliveryDate').value = formatDateForInput(new Date());
         document.getElementById('deliveryCondition').value = 'Novo';
-        document.getElementById('deviceLineDisplay').value = ''; // Limpa linha
-        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false); // Desmarca acessórios
-        document.getElementById('deliveryNotes').value = ''; // Limpa notas
+        document.getElementById('deviceLineDisplay').value = '';
+        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
+        document.getElementById('deliveryNotes').value = '';
     }
-    openModal(modal); // Abre o modal
+    openModal(modal);
 }
 
-// Função para gerar o HTML do termo para impressão
-// Função melhorada para gerar o HTML do termo para impressão
 function generatePrintableTermHTML(data) {
+    // ... (código da função ultra compacta inalterado) ...
     const accessories = data.acessorios || data.accessories || [];
     const accessoriesList = accessories.length > 0 ? accessories.join(', ') : 'Nenhum';
-
-    // Formatação segura da data de entrega
     const deliveryDateStr = data.data_entrega || data.deliveryDate;
     const deliveryDate = deliveryDateStr ? new Date(deliveryDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Data Inválida';
-
-    // Define o nome de quem entregou
     const delivererName = data.delivery_checker || state.currentUser?.nome || 'N/A';
-
-    // --- Seção de Devolução (ULTRA COMPACTA) ---
     let returnSectionHTML = '';
     const returnDateStr = data.data_devolucao || data.returnDate;
 
@@ -347,215 +297,116 @@ function generatePrintableTermHTML(data) {
         const returnDate = new Date(returnDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR');
         const receiverName = data.return_checker || state.currentUser?.nome || 'N/A';
 
-        // Estilos ultra compactados
         returnSectionHTML = `
             <div style="padding-top: 10px;">
                 <h3 style="font-size:12px; font-weight:700; margin: 10px 0 5px 0; border-bottom:1px solid #333; padding-bottom:3px;">
                     4. TERMO DE DEVOLUÇÃO
                 </h3>
-
                 <table style="width:100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9px;">
-                    <tr>
-                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td>
-                        <td style="padding:3px 4px; border:1px solid #ddd;">${returnDate}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
-                        <td style="padding:3px 4px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
-                        <td style="padding:3px 4px; border:1px solid #ddd;">${data.notas_devolucao || 'Nenhuma observação'}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Recebido por:</td>
-                        <td style="padding:3px 4px; border:1px solid #ddd;">${receiverName}</td>
-                    </tr>
+                     <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${returnDate}</td> </tr>
+                     <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td> </tr>
+                     <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${data.notas_devolucao || 'Nenhuma observação'}</td> </tr>
+                     <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Recebido por:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${receiverName}</td> </tr>
                 </table>
-
-                <div style="background:#f0f0f0; padding:6px 8px; border-radius:4px; margin:10px 0;">
-                    <p style="font-size:8px; line-height:1.3; margin:0;">
-                        <strong>Declaração do Funcionário:</strong><br>
-                        Declaro que devolvi o equipamento e todos os acessórios acima descritos,
-                        nas condições informadas, e que não possuo mais a posse ou
-                        responsabilidade sobre os mesmos.
-                    </p>
-                </div>
-
+                <div style="background:#f0f0f0; padding:6px 8px; border-radius:4px; margin:10px 0;"> <p style="font-size:8px; line-height:1.3; margin:0;"> <strong>Declaração do Funcionário:</strong><br> Declaro que devolvi o equipamento e todos os acessórios acima descritos, nas condições informadas, e que não possuo mais a posse ou responsabilidade sobre os mesmos. </p> </div>
                 <div style="margin-top:15px; display:flex; justify-content:space-around; text-align:center;">
-                    <div style="width:40%;">
-                        <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div>
-                        <p style="font-weight:600; margin:0; font-size:9px;">${data.employeeName || 'N/A'}</p>
-                        <p style="font-size:7px; color:#666; margin:0;">Assinatura do Funcionário</p>
-                    </div>
-                    <div style="width:40%;">
-                        <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div>
-                        <p style="font-weight:600; margin:0; font-size:9px;">${receiverName}</p>
-                        <p style="font-size:7px; color:#666; margin:0;">Assinatura do Receptor</p>
-                    </div>
+                    <div style="width:40%;"> <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div> <p style="font-weight:600; margin:0; font-size:9px;">${data.employeeName || 'N/A'}</p> <p style="font-size:7px; color:#666; margin:0;">Assinatura do Funcionário</p> </div>
+                    <div style="width:40%;"> <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div> <p style="font-weight:600; margin:0; font-size:9px;">${receiverName}</p> <p style="font-size:7px; color:#666; margin:0;">Assinatura do Receptor</p> </div>
                 </div>
             </div>`;
     }
 
-    // --- Estrutura Principal (ULTRA COMPACTA) ---
-    // AQUI DENTRO da função, o 'return `' está CORRETO
     return `
         <div class="print-container">
             ${getReportHeader()}
-
-            <h1 class="term-title">
-                TERMO DE RESPONSABILIDADE Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'}
-            </h1>
-
+            <h1 class="term-title"> TERMO DE RESPONSABILIDADE Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'} </h1>
             <h3 class="section-title">1. DADOS DO FUNCIONÁRIO</h3>
             <table class="data-table">
-                <tr>
-                    <td class="data-label">Nome Completo:</td>
-                    <td>${data.employeeName || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Matrícula:</td>
-                    <td>${data.employeeMatricula || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Cargo:</td>
-                    <td>${data.employeePosition || 'N/A'}</td>
-                </tr>
+                <tr> <td class="data-label">Nome Completo:</td> <td>${data.employeeName || 'N/A'}</td> </tr>
+                <tr> <td class="data-label">Matrícula:</td> <td>${data.employeeMatricula || 'N/A'}</td> </tr>
+                <tr> <td class="data-label">Cargo:</td> <td>${data.employeePosition || 'N/A'}</td> </tr>
             </table>
-
             <h3 class="section-title">2. DADOS DO EQUIPAMENTO</h3>
             <table class="data-table">
-                <tr>
-                    <td class="data-label">Modelo:</td>
-                    <td>${data.deviceModel || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">IMEI Principal:</td>
-                    <td>${data.deviceImei || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Linha Telefónica:</td>
-                    <td>${data.deviceLine || 'Sem linha vinculada'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Acessórios Inclusos:</td>
-                    <td>${accessoriesList}</td>
-                </tr>
+                <tr> <td class="data-label">Modelo:</td> <td>${data.deviceModel || 'N/A'}</td> </tr>
+                <tr> <td class="data-label">IMEI Principal:</td> <td>${data.deviceImei || 'N/A'}</td> </tr>
+                <tr> <td class="data-label">Linha Telefónica:</td> <td>${data.deviceLine || 'Sem linha vinculada'}</td> </tr>
+                <tr> <td class="data-label">Acessórios Inclusos:</td> <td>${accessoriesList}</td> </tr>
             </table>
-
             <h3 class="section-title">3. TERMO DE ENTREGA</h3>
             <table class="data-table">
-                <tr>
-                    <td class="data-label">Data de Entrega:</td>
-                    <td>${deliveryDate}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Condição:</td>
-                    <td>${data.condicao_entrega || data.deliveryCondition || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Observações:</td>
-                    <td>${data.notas_entrega || data.deliveryNotes || 'Nenhuma observação'}</td>
-                </tr>
-                <tr>
-                    <td class="data-label">Entregue por:</td>
-                    <td>${delivererName}</td>
-                </tr>
+                <tr> <td class="data-label">Data de Entrega:</td> <td>${deliveryDate}</td> </tr>
+                <tr> <td class="data-label">Condição:</td> <td>${data.condicao_entrega || data.deliveryCondition || 'N/A'}</td> </tr>
+                <tr> <td class="data-label">Observações:</td> <td>${data.notas_entrega || data.deliveryNotes || 'Nenhuma observação'}</td> </tr>
+                <tr> <td class="data-label">Entregue por:</td> <td>${delivererName}</td> </tr>
             </table>
-
-            <div class="declaration-box">
-                <p><strong>Declaração do Funcionário:</strong><br>
-                    Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições,
-                    responsabilizando-me por sua guarda, conservação e uso adequado durante o período em que
-                    estiver sob minha posse. Comprometo-me a devolver o equipamento nas mesmas condições de uso,
-                    ressalvado o desgaste natural. Em caso de perda, roubo ou dano intencional, assumo a
-                    responsabilidade pelos prejuízos causados.
-                </p>
-            </div>
-
+            <div class="declaration-box"> <p><strong>Declaração do Funcionário:</strong><br> Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições, responsabilizando-me por sua guarda, conservação e uso adequado durante o período em que estiver sob minha posse. Comprometo-me a devolver o equipamento nas mesmas condições de uso, ressalvado o desgaste natural. Em caso de perda, roubo ou dano intencional, assumo a responsabilidade pelos prejuízos causados. </p> </div>
             <div class="signatures">
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <p class="signature-name">${data.employeeName || 'N/A'}</p>
-                    <p class="signature-role">Assinatura do Funcionário</p>
-                </div>
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <p class="signature-name">${delivererName}</p>
-                    <p class="signature-role">Assinatura do Responsável</p>
-                </div>
+                <div class="signature-block"> <div class="signature-line"></div> <p class="signature-name">${data.employeeName || 'N/A'}</p> <p class="signature-role">Assinatura do Funcionário</p> </div>
+                <div class="signature-block"> <div class="signature-line"></div> <p class="signature-name">${delivererName}</p> <p class="signature-role">Assinatura do Responsável</p> </div>
             </div>
-
             ${returnSectionHTML}
+            <div class="footer-print"> <p>Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p> </div>
+        </div>`;
+}
 
-            <div class="footer-print">
-                <p>Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
-            </div>
-        </div>`; // ESTE ` fecha o return CORRETO da função
-} // ESTA é a chave que fecha a função generatePrintableTermHTML
-    // --- MUDANÇAS DE COMPACTAÇÃO AQUI ---
-    
-
-
-// Função auxiliar para imprimir - Aceita ID numérico ou objeto de dados completo
+// Função auxiliar para imprimir - MODIFICADA COM FLAG isPrinting
 async function printSingleRecord(recordOrData) {
+    // --- ADICIONADO: Verifica flag ---
+    if (isPrinting) {
+        console.log("Impressão já em andamento, ignorando.");
+        return;
+    }
+    // --- FIM DA ADIÇÃO ---
+
+    isPrinting = true; // --- ADICIONADO: Define flag ---
     showToast('A gerar termo para impressão...');
     let recordDataToPrint;
 
     try {
-        // Se recebeu um objeto (do formulário antes de salvar ou da resposta do POST)
         if (typeof recordOrData === 'object' && recordOrData !== null) {
-            // Busca dados atualizados do funcionário se não vieram no objeto
             const employee = state.employees.find(e => e.id === recordOrData.employeeMatricula);
-            recordDataToPrint = {
-                ...recordOrData, // Usa os dados recebidos
-                employeeName: employee?.name || recordOrData.employeeName || recordOrData.employeeMatricula, // Garante nome
-                employeePosition: employee?.position || recordOrData.employeePosition || 'N/A' // Garante cargo
-            };
+            recordDataToPrint = { ...recordOrData, employeeName: employee?.name || recordOrData.employeeName || recordOrData.employeeMatricula, employeePosition: employee?.position || recordOrData.employeePosition || 'N/A' };
         }
-        // Se recebeu um ID (número ou string numérica)
         else if (typeof recordOrData === 'number' || (typeof recordOrData === 'string' && !isNaN(parseInt(recordOrData)))) {
              const recordId = parseInt(recordOrData, 10);
-             const record = await fetchItemById('records', recordId); // Busca dados frescos do backend
+             const record = await fetchItemById('records', recordId);
              if (!record) throw new Error('Registo não encontrado para impressão.');
-
              const employee = state.employees.find(e => e.id === record.employeeMatricula);
-             recordDataToPrint = {
-                ...record,
-                employeeName: employee?.name || record.employeeMatricula,
-                employeePosition: employee?.position || 'N/A'
-            };
+             recordDataToPrint = { ...record, employeeName: employee?.name || record.employeeMatricula, employeePosition: employee?.position || 'N/A' };
         } else {
             throw new Error('Dados inválidos fornecidos para impressão.');
         }
 
-        // Se, após tudo, não conseguiu montar os dados, lança erro
         if (!recordDataToPrint) {
             throw new Error('Não foi possível obter os dados para impressão.');
         }
 
-        // Gera e imprime o HTML
         const content = generatePrintableTermHTML(recordDataToPrint);
-        printContent(content);
+        printContent(content); // Chama a função que executa window.print()
 
     } catch (error) {
         showToast(`Erro ao imprimir: ${error.message}`, true);
         console.error("Erro ao imprimir termo:", error);
+    } finally {
+        // --- ADICIONADO: Reseta flag após impressão ---
+        // Usamos um pequeno timeout para garantir que o navegador resetou do window.print()
+        setTimeout(() => {
+            isPrinting = false;
+        }, 500); // Meio segundo deve ser suficiente
+        // --- FIM DA ADIÇÃO ---
     }
 }
 
 
-// Função principal de inicialização do módulo
 export function initRecordsModule() {
+    // ... (código da função inalterado até o listener do #print-term-btn) ...
     const recordModal = document.getElementById('record-modal');
     const recordForm = document.getElementById('record-form');
     const deviceSelect = document.getElementById('deviceSelect');
-
-    // Flag para prevenir submissão dupla
     let isSubmitting = false;
 
-    // Atualiza campo "Linha Vinculada" ao mudar o aparelho selecionado no formulário
-    if (deviceSelect) {
+    if (deviceSelect) { /* ... listener 'change' inalterado ... */
         deviceSelect.addEventListener('change', (e) => {
             const selectedImei = e.target.value;
             const device = state.devices.find(d => d.imei1 === selectedImei);
@@ -566,35 +417,28 @@ export function initRecordsModule() {
         });
     }
 
-    // Botão "Novo Termo"
     const addRecordBtn = document.getElementById('add-record-btn');
-    if (addRecordBtn) {
-         addRecordBtn.addEventListener('click', () => openRecordForm()); // Abre formulário em modo de criação
+    if (addRecordBtn) { /* ... listener 'click' inalterado ... */
+         addRecordBtn.addEventListener('click', () => openRecordForm());
     }
 
-    // Botão "Cancelar" ou "X" do modal do formulário
     const cancelBtn = document.getElementById('cancel-btn');
-     if (cancelBtn) {
+     if (cancelBtn) { /* ... listener 'click' inalterado ... */
          cancelBtn.addEventListener('click', () => closeModal(recordModal));
      }
 
-    // Botões de filtro ("Todos", "Em Uso", "Devolvido") da tabela principal
     const filterContainer = document.getElementById('filter-container');
-     if (filterContainer) {
+     if (filterContainer) { /* ... listener 'click' inalterado ... */
         filterContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.filter-btn');
             if (!button) return;
-            // Atualiza estilo dos botões de filtro
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-gray-200'));
             button.classList.replace('bg-gray-200', 'bg-blue-600');
-            // Atualiza filtro no estado global e recarrega a primeira página
             state.mainTable.filter = button.dataset.filter;
             fetchRecordsPage(1);
         });
     }
 
-
-    // Listener para cliques nos botões da tabela principal (Ver/Editar, Imprimir, Excluir)
     const recordsTableBody = document.getElementById('records-table-body');
      if (recordsTableBody) {
         recordsTableBody.addEventListener('click', async (e) => {
@@ -604,237 +448,130 @@ export function initRecordsModule() {
             const action = button.dataset.action;
 
             if (action === 'view-record') {
-                openRecordForm(id); // Abre formulário em modo de edição
+                openRecordForm(id);
             } else if (action === 'print-record') {
-                printSingleRecord(id); // Imprime termo existente (busca dados atualizados)
+                // --- MODIFICADO: Chama printSingleRecord com a flag ---
+                printSingleRecord(id);
             } else if (action === 'delete-record') {
+                // ... (código do delete inalterado) ...
                 if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
                 try {
-                    // Envia requisição DELETE para o backend
-                    const res = await fetch(`${API_URL}/api/records/${id}`, {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ currentUser: state.currentUser })
-                    });
+                    const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast("Registo apagado.");
-                    // CORREÇÃO: Chamar fetchAllData() para atualizar também o status dos aparelhos
                     await fetchAllData();
                 } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
             }
         });
     }
 
-
-    // Listener para cliques nos botões de paginação
      const paginationControls = document.getElementById('pagination-controls');
-     if(paginationControls) {
+     if(paginationControls) { /* ... listener 'click' inalterado ... */
         paginationControls.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-page]');
             if (!button || button.disabled) return;
-            fetchRecordsPage(parseInt(button.dataset.page, 10)); // Busca a página clicada
+            fetchRecordsPage(parseInt(button.dataset.page, 10));
         });
     }
 
+    if (recordForm) { /* ... listener 'submit' inalterado ... */
+        recordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isSubmitting) { console.warn("Submissão já em progresso."); return; }
+            isSubmitting = true;
+            const saveButton = recordForm.querySelector('button[type="submit"]');
+            const recordId = document.getElementById('record-id').value;
+            const isEditing = !!recordId;
+            setLoading(saveButton);
+            let success = false;
+            let printData = null;
 
-    // Listener para submissão do formulário (Criar ou Editar)
-    recordForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Previne recarregamento da página
-
-        // --- INÍCIO: Prevenção de submissão dupla ---
-        if (isSubmitting) {
-            console.warn("Submissão já em progresso. Ignorando clique.");
-            return;
-        }
-        isSubmitting = true;
-        // --- FIM: Prevenção de submissão dupla ---
-
-        const saveButton = recordForm.querySelector('button[type="submit"]');
-        const recordId = document.getElementById('record-id').value;
-        const isEditing = !!recordId;
-
-        setLoading(saveButton); // Mostra estado de carregamento no botão
-        let success = false;    // Flag para controlar se a operação foi bem sucedida
-        let printData = null;   // Variável para guardar dados para impressão após sucesso
-
-        try {
-            // Processa uploads PRIMEIRO para obter as URLs
-            const deliveryTermFile = document.getElementById('deliveryTermAttachment');
-            const returnTermFile = document.getElementById('returnTermAttachment');
-            const policeReportFile = document.getElementById('policeReportAttachment');
-
-            // Só faz upload se um ficheiro foi selecionado
-            const deliveryTermUrl = deliveryTermFile.files.length > 0 ? await handleFileUpload(deliveryTermFile) : null;
-            const returnTermUrl = returnTermFile.files.length > 0 ? await handleFileUpload(returnTermFile) : null;
-            const policeReportUrl = policeReportFile.files.length > 0 ? await handleFileUpload(policeReportFile) : null;
-
-            let recordData; // Payload a ser enviado para o backend
-            if (isEditing) {
-                // Monta o payload para ATUALIZAÇÃO (PUT)
-                 recordData = {
-                    returnDate: document.getElementById('returnDate').value || null,
-                    returnCondition: document.getElementById('returnCondition').value || null,
-                    returnNotes: document.getElementById('returnNotes').value,
-                    returnChecker: document.getElementById('returnChecker').value || state.currentUser?.nome || null, // Usa user logado como fallback
-                    currentUser: state.currentUser,
-                    // Inclui URLs apenas se um NOVO ficheiro foi enviado nesta edição
-                    ...(deliveryTermUrl && { deliveryTermUrl: deliveryTermUrl }),
-                    ...(returnTermUrl && { returnTermUrl: returnTermUrl }),
-                    ...(policeReportUrl && { policeReportUrl: policeReportUrl }),
-                 };
-            } else {
-                 // Monta o payload para CRIAÇÃO (POST)
-                 recordData = {
-                    employeeMatricula: document.getElementById('employeeSelect').value,
-                    deviceImei: document.getElementById('deviceSelect').value,
-                    deliveryDate: document.getElementById('deliveryDate').value,
-                    deliveryCondition: document.getElementById('deliveryCondition').value,
-                    deliveryNotes: document.getElementById('deliveryNotes').value,
-                    accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value),
-                    deliveryChecker: state.currentUser.nome, // Preenche automaticamente
-                    currentUser: state.currentUser,
-                    deliveryTermUrl: deliveryTermUrl, // Pode ser null se não houver upload
-                 };
-                 // Validação básica para criação
-                 if (!recordData.employeeMatricula || !recordData.deviceImei || !recordData.deliveryDate) {
-                    throw new Error("Funcionário, Aparelho e Data de Entrega são obrigatórios.");
-                 }
-            }
-
-            // Define URL e método (POST para criar, PUT para editar)
-            const url = isEditing ? `${API_URL}/api/records/${recordId}` : `${API_URL}/api/records/`;
-            const method = isEditing ? 'PUT' : 'POST';
-
-            // Envia a requisição para o backend
-            const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordData) });
-            const result = await res.json();
-
-            // Verifica se a resposta NÃO foi bem sucedida
-            if (!res.ok) {
-                console.error("Erro na resposta do servidor:", res.status, result);
-                throw new Error(result.message || `Erro ${res.status}`);
-            }
-
-            // Se chegou aqui, a operação foi bem sucedida
-            success = true; // Marca como sucesso
-            showToast(result.message); // Exibe mensagem de sucesso
-
-            // Prepara dados para impressão automática APENAS SE for criação (POST) e sucesso
-            if (method === 'POST' && result.newRecord) {
-                 const employee = state.employees.find(e => e.id === recordData.employeeMatricula);
-                 printData = {
-                    ...result.newRecord, // Dados retornados pelo backend (inclui o novo ID)
-                    // Adiciona dados do formulário que podem não vir do backend
-                    deliveryDate: recordData.deliveryDate,
-                    deliveryCondition: recordData.deliveryCondition,
-                    deliveryNotes: recordData.deliveryNotes,
-                    accessories: recordData.accessories,
-                    delivery_checker: recordData.deliveryChecker,
-                    employeePosition: employee?.position || 'N/A' // Busca cargo
-                 };
-            }
-
-            // --- CORREÇÃO DO BUG ---
-            // Substituir a linha abaixo:
-            // await fetchRecordsPage(isEditing ? state.mainTable.currentPage : 1);
-            // Por esta:
-            await fetchAllData(); 
-            // 'fetchAllData' já recarrega os termos E os aparelhos.
-            // --- FIM DA CORREÇÃO ---
-            
-            closeModal(recordModal); // Fecha o modal
-
-        } catch (error) {
-        // Se chegou aqui, a operação falhou
-        console.error("Erro ao salvar o termo:", error);
-        
-        // Verifica se é erro de conflito (aparelho em uso)
-        if (error.message && error.message.includes('já está associado ao termo')) {
-            const termoId = extractTermoIdFromError(error.message);
-            if (termoId) {
-                showConflictModal(error.message, termoId);
-            } else {
-                showToast(error.message, true);
-            }
-        } else {
-            showToast(`Erro ao salvar: ${error.message}`, true);
-        }
-        success = false;
-        
-    } finally {
-        // Este bloco executa SEMPRE
-        unsetLoading(saveButton);
-        isSubmitting = false;
-
-        // Imprime automaticamente APENAS se sucesso E for POST
-        if (success && printData) {
             try {
-                await printSingleRecord(printData);
-            } catch (printError) {
-                 console.error("Erro durante a impressão automática:", printError);
-                 showToast("Termo salvo, mas houve erro ao gerar a impressão.", true);
+                const deliveryTermFile = document.getElementById('deliveryTermAttachment');
+                const returnTermFile = document.getElementById('returnTermAttachment');
+                const policeReportFile = document.getElementById('policeReportAttachment');
+                const deliveryTermUrl = deliveryTermFile.files.length > 0 ? await handleFileUpload(deliveryTermFile) : null;
+                const returnTermUrl = returnTermFile.files.length > 0 ? await handleFileUpload(returnTermFile) : null;
+                const policeReportUrl = policeReportFile.files.length > 0 ? await handleFileUpload(policeReportFile) : null;
+                let recordData;
+                if (isEditing) {
+                     recordData = { returnDate: document.getElementById('returnDate').value || null, returnCondition: document.getElementById('returnCondition').value || null, returnNotes: document.getElementById('returnNotes').value, returnChecker: document.getElementById('returnChecker').value || state.currentUser?.nome || null, currentUser: state.currentUser, ...(deliveryTermUrl && { deliveryTermUrl: deliveryTermUrl }), ...(returnTermUrl && { returnTermUrl: returnTermUrl }), ...(policeReportUrl && { policeReportUrl: policeReportUrl }), };
+                } else {
+                     recordData = { employeeMatricula: document.getElementById('employeeSelect').value, deviceImei: document.getElementById('deviceSelect').value, deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), deliveryChecker: state.currentUser.nome, currentUser: state.currentUser, deliveryTermUrl: deliveryTermUrl, };
+                     if (!recordData.employeeMatricula || !recordData.deviceImei || !recordData.deliveryDate) { throw new Error("Funcionário, Aparelho e Data de Entrega são obrigatórios."); }
+                }
+                const url = isEditing ? `${API_URL}/api/records/${recordId}` : `${API_URL}/api/records/`;
+                const method = isEditing ? 'PUT' : 'POST';
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordData) });
+                const result = await res.json();
+                if (!res.ok) { console.error("Erro na resposta do servidor:", res.status, result); throw new Error(result.message || `Erro ${res.status}`); }
+                success = true;
+                showToast(result.message);
+                if (method === 'POST' && result.newRecord) {
+                     const employee = state.employees.find(e => e.id === recordData.employeeMatricula);
+                     printData = { ...result.newRecord, deliveryDate: recordData.deliveryDate, deliveryCondition: recordData.deliveryCondition, deliveryNotes: recordData.deliveryNotes, accessories: recordData.accessories, delivery_checker: recordData.deliveryChecker, employeePosition: employee?.position || 'N/A' };
+                }
+                await fetchAllData();
+                closeModal(recordModal);
+            } catch (error) {
+                console.error("Erro ao salvar o termo:", error);
+                if (error.message && error.message.includes('já está associado ao termo')) {
+                    const termoId = extractTermoIdFromError(error.message);
+                    if (termoId) { showConflictModal(error.message, termoId); } else { showToast(error.message, true); }
+                } else { showToast(`Erro ao salvar: ${error.message}`, true); }
+                success = false;
+            } finally {
+                unsetLoading(saveButton);
+                isSubmitting = false;
+                if (success && printData) {
+                    try {
+                        // --- MODIFICADO: Chama printSingleRecord com a flag ---
+                        await printSingleRecord(printData);
+                    } catch (printError) { console.error("Erro durante a impressão automática:", printError); showToast("Termo salvo, mas houve erro ao gerar a impressão.", true); }
+                }
             }
-        }
+        });
     }
-    });
 
-    // Listener para o botão "Imprimir" DENTRO do modal
-  const printTermBtn = document.getElementById('print-term-btn');
+    const printTermBtn = document.getElementById('print-term-btn');
      if(printTermBtn) {
-        printTermBtn.addEventListener('click', (e) => { // <--- Função com 'e'
-            e.stopPropagation(); // <--- IMPEDE PROPAGAÇÃO DO EVENTO
-            e.preventDefault();  // <--- IMPEDE AÇÃO PADRÃO DO BOTÃO
+        printTermBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            // --- ADICIONADO: Verifica flag ---
+            if (isPrinting) {
+                console.log("Impressão já em andamento, ignorando.");
+                return;
+            }
+            // --- FIM DA ADIÇÃO ---
 
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
-                // Se está a editar (tem ID), busca os dados mais recentes para imprimir
+                // --- MODIFICADO: Chama printSingleRecord com a flag ---
                 printSingleRecord(parseInt(recordId, 10));
             } else {
-                 // Se é um novo termo (sem ID), imprime com os dados atuais do formulário
-                 const employeeSelect = document.getElementById('employeeSelect');
-                 const deviceSelect = document.getElementById('deviceSelect');
-                 const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value);
-                 const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
-
-                 // Verifica se selecionou funcionário e aparelho
-                 if (!selectedEmployee || !selectedDevice) {
-                    showToast("Selecione Funcionário e Aparelho para imprimir.", true);
-                    return;
+                 // --- ADICIONADO: Define flag e try/finally ---
+                 isPrinting = true;
+                 try {
+                     const employeeSelect = document.getElementById('employeeSelect');
+                     const deviceSelect = document.getElementById('deviceSelect');
+                     const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value);
+                     const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
+                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); return; }
+                     const formDataForPrint = { id: 'Novo', employeeName: selectedEmployee.name, employeeMatricula: selectedEmployee.id, employeePosition: selectedEmployee.position, deviceModel: selectedDevice.model, deviceImei: selectedDevice.imei1, deviceLine: document.getElementById('deviceLineDisplay').value || 'N/A', deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), delivery_checker: state.currentUser?.nome || 'N/A', data_devolucao: null, condicao_devolucao: null, notas_devolucao: null, return_checker: null };
+                     const content = generatePrintableTermHTML(formDataForPrint);
+                     printContent(content);
+                 } finally {
+                    // Usamos um pequeno timeout para garantir que o navegador resetou do window.print()
+                    setTimeout(() => {
+                        isPrinting = false;
+                    }, 500);
                  }
-
-                 // Monta o objeto de dados a partir do formulário
-                const formDataForPrint = {
-                    id: 'Novo', // Identifica como não salvo
-                    employeeName: selectedEmployee.name,
-                    employeeMatricula: selectedEmployee.id,
-                    employeePosition: selectedEmployee.position,
-                    deviceModel: selectedDevice.model,
-                    deviceImei: selectedDevice.imei1,
-                    deviceLine: document.getElementById('deviceLineDisplay').value || 'N/A',
-                    deliveryDate: document.getElementById('deliveryDate').value,
-                    deliveryCondition: document.getElementById('deliveryCondition').value,
-                    deliveryNotes: document.getElementById('deliveryNotes').value,
-                    accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value),
-                    delivery_checker: state.currentUser?.nome || 'N/A',
-                    // Campos de devolução vazios para novo termo
-                    data_devolucao: null,
-                    condicao_devolucao: null,
-                    notas_devolucao: null,
-                    return_checker: null
-                };
-                 // Chama diretamente a função de gerar HTML, sem precisar buscar dados
-                 const content = generatePrintableTermHTML(formDataForPrint);
-                 printContent(content);
+                 // --- FIM DA ADIÇÃO ---
             }
         });
     }
 
 } // Fim de initRecordsModule
-
-
-
-
-
-
-
