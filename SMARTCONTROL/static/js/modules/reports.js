@@ -26,10 +26,9 @@ export function printContent(htmlContent) {
     const printSection = document.getElementById('print-section');
     if (printSection) {
         printSection.innerHTML = htmlContent;
-        setTimeout(() => {
-            window.print();
-            printSection.innerHTML = '';
-        }, 100);
+        window.print(); // Chama a impressão imediatamente
+        // Opcional: Limpar depois (pode ou não ser necessário)
+        // printSection.innerHTML = ''; 
     }
 }
 
@@ -273,5 +272,6 @@ export function initReportsModule() {
     if (reportMaintenanceBtn) reportMaintenanceBtn.addEventListener('click', () => generateMaintenanceReport(reportModal));
 
 }
+
 
 
