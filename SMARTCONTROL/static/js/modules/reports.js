@@ -5,9 +5,14 @@ import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 
 export function getReportHeader() {
     const info = state.companyInfo;
+    
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Adicionamos !important às regras de 'height' e 'max-width'
+    // para garantir que elas não sejam sobrepostas pelo style.css
     const logoHtml = info && info.logo 
-        ? `<img src="data:image/png;base64,${info.logo}" alt="Logótipo" style="height:50px;max-width:180px;" onerror="this.style.display='none'">` 
+        ? `<img src="data:image/png;base64,${info.logo}" alt="Logótipo" style="height:50px !important;max-width:180px !important; object-fit:contain;" onerror="this.style.display='none'">` 
         : '';
+    // --- FIM DA CORREÇÃO ---
 
     return `
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:20px;">
@@ -271,3 +276,4 @@ export function initReportsModule() {
     if (reportMaintenanceBtn) reportMaintenanceBtn.addEventListener('click', () => generateMaintenanceReport(reportModal));
 
 }
+
