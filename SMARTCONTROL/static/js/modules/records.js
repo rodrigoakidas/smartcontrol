@@ -179,13 +179,13 @@ export function renderMainTable() {
             const row = document.createElement('tr');
             row.className = 'border-b hover:bg-gray-50';
             // --- REMOÇÃO DO COMENTÁRIO VISUAL ---
-            row.innerHTML = `
+           row.innerHTML = `
                 <td class="p-3 align-top">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
                 <td class="p-3 align-top">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
                 <td class="p-3 align-top">${deliveryDateFormatted}</td>
                 <td class="p-3 align-top"><span class="px-2 py-1 text-xs font-medium rounded-full ${status.class}">${status.text}</span></td>
                 <td class="p-3 no-print align-top">
-                    {/* <<< REMOVIDO O TEXTO DO COMENTÁRIO DAQUI >>> */}
+                    
                     <div class="flex justify-center items-center gap-1 flex-wrap">
                         <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1 hover:text-gray-800" title="Ver/Editar"><i data-lucide="file-pen-line" class="w-4 h-4"></i></button>
                         ${attachmentButtons}
