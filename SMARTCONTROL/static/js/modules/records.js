@@ -1,3 +1,7 @@
+// SMARTCONTROL/static/js/modules/records.js
+// (VERSÃO CORRIGIDA)
+
+// CORREÇÃO: Importar 'fetchAllData'
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
 import { API_URL, fetchItemById, handleFileUpload } from './api.js';
@@ -392,7 +396,6 @@ function generatePrintableTermHTML(data) {
                 Termo de Responsabilidade Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'}
             </h1>
             
-            <!-- SEÇÃO 1: FUNCIONÁRIO -->
             <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
                 1. DADOS DO FUNCIONÁRIO
             </h3>
@@ -412,7 +415,6 @@ function generatePrintableTermHTML(data) {
                 </tr>
             </table>
             
-            <!-- SEÇÃO 2: EQUIPAMENTO -->
             <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
                 2. DADOS DO EQUIPAMENTO
             </h3>
@@ -436,7 +438,6 @@ function generatePrintableTermHTML(data) {
                 </tr>
             </table>
             
-            <!-- SEÇÃO 3: ENTREGA -->
             <h3 style="font-size:16px; font-weight:700; margin: 24px 0 12px 0; border-bottom:2px solid #333; padding-bottom:8px;">
                 3. TERMO DE ENTREGA
             </h3>
@@ -486,7 +487,6 @@ function generatePrintableTermHTML(data) {
             
             ${returnSectionHTML}
             
-            <!-- Rodapé com data de impressão -->
             <div style="margin-top:60px; padding-top:16px; border-top:1px solid #ccc; text-align:center; font-size:10px; color:#666;">
                 <p style="margin:0;">Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
             </div>
@@ -616,8 +616,8 @@ export function initRecordsModule() {
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast("Registo apagado.");
-                    // Recarrega a página atual da tabela
-                    await fetchRecordsPage(state.mainTable.currentPage);
+                    // CORREÇÃO: Chamar fetchAllData() para atualizar também o status dos aparelhos
+                    await fetchAllData();
                 } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
             }
         });
@@ -732,8 +732,14 @@ export function initRecordsModule() {
                  };
             }
 
-            // Recarrega a tabela (vai para pág 1 se criou, mantém pág atual se editou)
-            await fetchRecordsPage(isEditing ? state.mainTable.currentPage : 1);
+            // --- CORREÇÃO DO BUG ---
+            // Substituir a linha abaixo:
+            // await fetchRecordsPage(isEditing ? state.mainTable.currentPage : 1);
+            // Por esta:
+            await fetchAllData(); 
+            // 'fetchAllData' já recarrega os termos E os aparelhos.
+            // --- FIM DA CORREÇÃO ---
+            
             closeModal(recordModal); // Fecha o modal
 
         } catch (error) {
@@ -820,4 +826,3 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
-
