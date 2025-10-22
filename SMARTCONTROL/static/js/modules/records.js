@@ -780,9 +780,11 @@ export function initRecordsModule() {
     });
 
     // Listener para o botão "Imprimir" DENTRO do modal
-     const printTermBtn = document.getElementById('print-term-btn');
+   const printTermBtn = document.getElementById('print-term-btn');
      if(printTermBtn) {
-        printTermBtn.addEventListener('click', () => {
+        printTermBtn.addEventListener('click', (e) => { // <--- Adicionado 'e'
+            e.stopPropagation(); // <--- IMPEDE PROPAGAÇÃO DO EVENTO
+            
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
                 // Se está a editar (tem ID), busca os dados mais recentes para imprimir
@@ -829,6 +831,7 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
 
 
 
