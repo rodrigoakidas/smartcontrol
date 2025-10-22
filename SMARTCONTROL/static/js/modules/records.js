@@ -1,5 +1,5 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO CORRIGIDA - Força refresh no Novo Termo e remove comentário)
+// (VERSÃO CORRIGIDA FINAL - Remove comentário visual e garante refresh no Novo Termo)
 
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
@@ -178,14 +178,14 @@ export function renderMainTable() {
             // Cria e adiciona a linha
             const row = document.createElement('tr');
             row.className = 'border-b hover:bg-gray-50';
-            // --- CORREÇÃO DO COMENTÁRIO VISUAL ---
+            // --- REMOÇÃO DO COMENTÁRIO VISUAL ---
             row.innerHTML = `
                 <td class="p-3 align-top">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
                 <td class="p-3 align-top">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
                 <td class="p-3 align-top">${deliveryDateFormatted}</td>
                 <td class="p-3 align-top"><span class="px-2 py-1 text-xs font-medium rounded-full ${status.class}">${status.text}</span></td>
                 <td class="p-3 no-print align-top">
-                    {/* O comentário foi removido daqui */}
+                    {/* O comentário foi removido desta div */}
                     <div class="flex justify-center items-center gap-1 flex-wrap">
                         <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1 hover:text-gray-800" title="Ver/Editar"><i data-lucide="file-pen-line" class="w-4 h-4"></i></button>
                         ${attachmentButtons}
@@ -194,7 +194,7 @@ export function renderMainTable() {
                     </div>
                 </td>
             `;
-            // --- FIM DA CORREÇÃO ---
+            // --- FIM DA REMOÇÃO ---
             recordsTableBody.appendChild(row);
         });
     }
@@ -212,27 +212,30 @@ export function renderMainTable() {
 
 // Abre o formulário de registo
 async function openRecordForm(recordId = null) {
-    // --- CORREÇÃO DO ESTADO OBSOLETO ---
-    // Se for um NOVO termo, força a atualização de TODOS os dados ANTES de popular
+    // --- GARANTIR DADOS ATUALIZADOS PARA NOVO TERMO ---
     if (!recordId) {
-        showToast("A carregar dados atualizados..."); // Feedback para o user
+        showToast("A carregar dados atualizados...");
         try {
-            await fetchAllData(); // Garante que state.employees e state.devices estão frescos
-            showToast("Pronto para criar novo termo.");
+            await fetchAllData(); // Força a busca de TUDO antes de abrir
+            // Não precisa mostrar toast de sucesso aqui, só em caso de erro
         } catch (error) {
-            showToast("Erro ao carregar dados atualizados. Tente novamente.", true);
+            showToast("Erro ao carregar dados atualizados. Não é possível criar novo termo.", true);
+            console.error("Falha ao carregar dados em openRecordForm:", error);
             return; // Impede abrir o modal se os dados falharam
         }
     }
-    // --- FIM DA CORREÇÃO ---
+    // --- FIM DA GARANTIA ---
 
     const form = document.getElementById('record-form');
     const modal = document.getElementById('record-modal');
-    if (!form || !modal) return;
-    form.reset();
-    document.getElementById('record-id').value = recordId || '';
+    if (!form || !modal) {
+        console.error("Formulário ou Modal de registo não encontrado!");
+        return;
+    }
+    form.reset(); // Limpa campos
+    document.getElementById('record-id').value = recordId || ''; // Define ID ou vazio
 
-    // ... (resto do código da openRecordForm para popular campos, inalterado) ...
+    // Seletores dos elementos do formulário (declarados uma vez para clareza)
     const employeeSelect = document.getElementById('employeeSelect');
     const deviceSelect = document.getElementById('deviceSelect');
     const viewDeliveryTermBtn = document.getElementById('viewDeliveryTermBtn');
@@ -244,116 +247,128 @@ async function openRecordForm(recordId = null) {
     const returnTermSection = document.getElementById('return-term-attachment-section');
     const policeReportSection = document.getElementById('police-report-attachment-section');
     const returnConditionSelect = document.getElementById('returnCondition');
+    const deliveryFieldset = document.getElementById('delivery-fieldset');
+    const returnFieldset = document.getElementById('return-fieldset');
+    const modalTitle = document.getElementById('modal-title');
 
-    // Reset anexo links/inputs
+    // Reset estado visual/funcional dos anexos e seções
     [viewDeliveryTermBtn, viewReturnTermBtn, viewPoliceReportBtn].forEach(btn => btn.classList.add('hidden'));
-    [deliveryTermInput, returnTermInput, policeReportInput].forEach(input => { input.value = ''; input.disabled = false; });
+    [deliveryTermInput, returnTermInput, policeReportInput].forEach(input => { input.value = ''; input.disabled = false; }); // Garante habilitado por padrão
     [returnTermSection, policeReportSection].forEach(section => section.style.display = 'none');
+    returnFieldset.classList.add('hidden'); // Esconde devolução por padrão
 
-    // Reset listener (se existir) e adiciona de novo
+    // Remove listener antigo e adiciona novo para condição de devolução
     if (returnConditionSelect) {
-        const newSelect = returnConditionSelect.cloneNode(true); // Clona para remover listeners antigos
+        const newSelect = returnConditionSelect.cloneNode(true);
         returnConditionSelect.parentNode.replaceChild(newSelect, returnConditionSelect);
         newSelect.addEventListener('change', (e) => {
             const condition = e.target.value;
-            returnTermSection.style.display = condition === 'Bom' || condition === 'Danificado' ? 'block' : 'none';
+            // Mostra/Esconde seções corretas
+            returnTermSection.style.display = (condition === 'Bom' || condition === 'Danificado') ? 'block' : 'none';
             policeReportSection.style.display = condition === 'Perda/Roubo' ? 'block' : 'none';
+            // Habilita/Desabilita inputs de ficheiro correspondentes
+            returnTermInput.disabled = !(condition === 'Bom' || condition === 'Danificado');
+            policeReportInput.disabled = !(condition === 'Perda/Roubo');
         });
+         // Garante que os inputs estão no estado correto inicial (desabilitados)
+         returnTermInput.disabled = true;
+         policeReportInput.disabled = true;
     }
 
-    // Lógica EDIÇÃO
+    // --- LÓGICA DE EDIÇÃO ---
     if (recordId) {
-        document.getElementById('modal-title').textContent = "Ver/Editar Termo";
-        document.getElementById('delivery-fieldset').querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = true);
-        deliveryTermInput.disabled = false; // Permite sempre anexar termo entrega
-        document.getElementById('return-fieldset').classList.remove('hidden');
-        document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false); // Habilita TODOS, incluindo file inputs
+        modalTitle.textContent = "Ver/Editar Termo";
+        // Desabilita campos de entrega (exceto upload, se necessário)
+        deliveryFieldset.querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = true);
+        deliveryTermInput.disabled = false; // Permite anexar/substituir termo de entrega
+        // Mostra e habilita campos de devolução
+        returnFieldset.classList.remove('hidden');
+        returnFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = false); // Habilita TODOS
 
         try {
-            // Busca dados frescos especificamente para este ID (redundante se fetchAllData já rodou, mas seguro)
+            // Busca dados frescos do ID específico (pode ser redundante mas garante consistência)
             const data = await fetchItemById('records', recordId);
             if (!data) { closeModal(modal); showToast("Termo não encontrado.", true); return; }
 
-            // Preenche dados entrega (view only)
-            const employeeData = state.employees.find(e => e.id === data.employeeMatricula); // Usa matricula
-            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`;
-            // Mostra o aparelho associado, mesmo que não esteja mais disponível (para contexto histórico)
-            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`;
+            // Preenche dados de ENTREGA (não editáveis, exceto anexo)
+            const employeeData = state.employees.find(e => e.id === data.employeeMatricula);
+            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected disabled>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`; // Adiciona disabled
+            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected disabled>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`; // Adiciona disabled
             document.getElementById('deviceLineDisplay').value = data.deviceLine || 'Nenhuma';
             document.getElementById('deliveryDate').value = formatDateForInput(data.data_entrega);
             document.getElementById('deliveryCondition').value = data.condicao_entrega || '';
             document.getElementById('deliveryNotes').value = data.notas_entrega || '';
-            document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('input[name="accessories"]').forEach(cb => { cb.checked = false; cb.disabled = true; }); // Desabilita checkboxes
             if (data.acessorios && Array.isArray(data.acessorios)) {
                 data.acessorios.forEach(acc => {
                     const cb = form.querySelector(`input[name="accessories"][value="${acc}"]`);
                     if (cb) cb.checked = true;
                 });
             }
-            if (data.termo_entrega_url) {
-                viewDeliveryTermBtn.href = data.termo_entrega_url;
-                viewDeliveryTermBtn.classList.remove('hidden');
-            }
+            if (data.termo_entrega_url) { viewDeliveryTermBtn.href = data.termo_entrega_url; viewDeliveryTermBtn.classList.remove('hidden'); }
 
-            // Preenche dados devolução (editáveis)
+            // Preenche dados de DEVOLUÇÃO (editáveis)
             document.getElementById('returnDate').value = formatDateForInput(data.data_devolucao);
-            const currentReturnConditionSelect = document.getElementById('returnCondition'); // Pega o select atualizado
-            currentReturnConditionSelect.value = data.condicao_devolucao || '';
+            const currentReturnConditionSelect = document.getElementById('returnCondition'); // Pega ref do select ATUALIZADO
+            currentReturnConditionSelect.value = data.condicao_devolucao || ''; // Define valor
             document.getElementById('returnNotes').value = data.notas_devolucao || '';
             document.getElementById('returnChecker').value = data.return_checker || '';
-            if (data.termo_devolucao_url) {
-                viewReturnTermBtn.href = data.termo_devolucao_url;
-                viewReturnTermBtn.classList.remove('hidden');
-            }
-            if (data.bo_url) {
-                viewPoliceReportBtn.href = data.bo_url;
-                viewPoliceReportBtn.classList.remove('hidden');
-            }
-            // Dispara o evento 'change' para mostrar/esconder anexos corretos
+            if (data.termo_devolucao_url) { viewReturnTermBtn.href = data.termo_devolucao_url; viewReturnTermBtn.classList.remove('hidden'); }
+            if (data.bo_url) { viewPoliceReportBtn.href = data.bo_url; viewPoliceReportBtn.classList.remove('hidden'); }
+
+            // Dispara 'change' para garantir visibilidade correta das seções de anexo
             currentReturnConditionSelect.dispatchEvent(new Event('change'));
 
         } catch (error) {
-            showToast("Erro ao carregar detalhes do termo.", true);
-            console.error("Erro ao buscar detalhes para edição:", error);
-            closeModal(modal); return;
+            showToast("Erro ao carregar detalhes para edição.", true);
+            console.error("Erro buscar detalhes edição:", error);
+            closeModal(modal);
+            return;
         }
 
-    // Lógica NOVO TERMO
+    // --- LÓGICA DE NOVO TERMO ---
     } else {
-        document.getElementById('modal-title').textContent = "Novo Termo de Responsabilidade";
-        document.getElementById('delivery-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
-        document.getElementById('return-fieldset').classList.add('hidden');
-        document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = true);
+        modalTitle.textContent = "Novo Termo de Responsabilidade";
+        // Garante que campos de entrega estão habilitados
+        deliveryFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
+        // Garante que campos de devolução estão escondidos e desabilitados
+        returnFieldset.classList.add('hidden');
+        returnFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = true);
 
-        // Popula dropdowns com dados JÁ ATUALIZADOS pelo fetchAllData no início da função
+        // Popula dropdowns com dados JÁ ATUALIZADOS pelo fetchAllData no início
         employeeSelect.innerHTML = '<option value="">Selecione...</option>';
-        state.employees.forEach(e => employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`);
+        if (state.employees && state.employees.length > 0) {
+            state.employees.forEach(e => employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`);
+        } else {
+            employeeSelect.innerHTML = '<option value="">Nenhum funcionário carregado</option>';
+        }
 
         deviceSelect.innerHTML = '<option value="">Selecione...</option>';
-        const availableDevices = state.devices.filter(d => d.status === 'Disponível'); // Filtra usando o status atualizado
+        // Filtra usando o estado ATUALIZADO de state.devices
+        const availableDevices = state.devices.filter(d => d.status === 'Disponível');
         if (availableDevices.length > 0) {
             availableDevices.forEach(d => {
                 deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
             });
         } else {
-             deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
+            deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
         }
 
-        // Preenche defaults
-        document.getElementById('deliveryDate').value = formatDateForInput(new Date());
-        document.getElementById('deliveryCondition').value = 'Novo';
-        document.getElementById('deviceLineDisplay').value = '';
-        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
-        document.getElementById('deliveryNotes').value = '';
+        // Preenche valores padrão
+        document.getElementById('deliveryDate').value = formatDateForInput(new Date()); // Data atual
+        document.getElementById('deliveryCondition').value = 'Novo'; // Default
+        document.getElementById('deviceLineDisplay').value = ''; // Limpa linha
+        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false); // Desmarca acessórios
+        document.getElementById('deliveryNotes').value = ''; // Limpa notas
     }
-    openModal(modal);
+    openModal(modal); // Abre o modal no final
 }
 
 
 // Gera HTML para impressão (ULTRA COMPACTA COM CLASSES)
 function generatePrintableTermHTML(data) {
     // ... (código da função ultra compacta INALTERADO) ...
-    const accessories = data.acessorios || data.accessories || [];
+     const accessories = data.acessorios || data.accessories || [];
     const accessoriesList = accessories.length > 0 ? accessories.join(', ') : 'Nenhum';
     const deliveryDateStr = data.data_entrega || data.deliveryDate;
     const deliveryDate = deliveryDateStr ? new Date(deliveryDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Data Inválida';
@@ -450,8 +465,12 @@ export function initRecordsModule() {
     const deviceSelect = document.getElementById('deviceSelect');
     let isSubmitting = false; // Flag para submit
 
+    // Listener para linha vinculada (associado ao deviceSelect)
     if (deviceSelect) {
-        deviceSelect.addEventListener('change', (e) => {
+        // Remove listener antigo se houver (importante se init for chamado múltiplas vezes)
+        const newSelect = deviceSelect.cloneNode(true);
+        deviceSelect.parentNode.replaceChild(newSelect, deviceSelect);
+        newSelect.addEventListener('change', (e) => {
             const selectedImei = e.target.value;
             const device = state.devices.find(d => d.imei1 === selectedImei);
             const lineDisplay = document.getElementById('deviceLineDisplay');
@@ -460,7 +479,7 @@ export function initRecordsModule() {
     }
 
     const addRecordBtn = document.getElementById('add-record-btn');
-    if (addRecordBtn) { addRecordBtn.addEventListener('click', () => openRecordForm()); }
+    if (addRecordBtn) { addRecordBtn.addEventListener('click', () => openRecordForm()); } // Chama openRecordForm SEM ID
 
     const cancelBtn = document.getElementById('cancel-btn');
     if (cancelBtn) { cancelBtn.addEventListener('click', () => closeModal(recordModal)); }
@@ -484,23 +503,14 @@ export function initRecordsModule() {
             // Atualiza state e busca dados
             const newFilter = button.dataset.filter;
             if (state.mainTable.filter !== newFilter) {
-                 updateState({ mainTable: { ...state.mainTable, filter: newFilter } });
-                 fetchRecordsPage(1); // Volta para a página 1 ao mudar filtro
+                 updateState({ mainTable: { ...state.mainTable, filter: newFilter, currentPage: 1 } }); // Reseta para página 1
+                 fetchRecordsPage(1); // Busca a página 1
             }
         });
-         // Inicializa o botão de filtro correto no carregamento
+         // Inicializa botão de filtro
          const initialFilter = state.mainTable.filter || 'Todos';
          const activeButton = filterContainer.querySelector(`.filter-btn[data-filter="${initialFilter}"]`);
-         if (activeButton) {
-            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.replace('bg-blue-600', 'bg-gray-200');
-                btn.classList.replace('text-white', 'text-gray-700');
-                btn.disabled = false;
-            });
-             activeButton.classList.replace('bg-gray-200', 'bg-blue-600');
-             activeButton.classList.replace('text-gray-700', 'text-white');
-             activeButton.disabled = true;
-         }
+         if (activeButton && !activeButton.disabled) { activeButton.click(); } // Simula clique se não estiver ativo
     }
 
 
@@ -508,35 +518,37 @@ export function initRecordsModule() {
     const recordsTableBody = document.getElementById('records-table-body');
     if (recordsTableBody) {
         recordsTableBody.addEventListener('click', async (e) => {
-            // Target pode ser o botão ou o ícone dentro dele, ou o link 'a'
             const targetElement = e.target.closest('button[data-action], a[href]');
+            if (!targetElement) return;
 
-            if (!targetElement) return; // Sai se não clicou em nada interativo
-
-            // Se for um link de anexo, deixa o navegador abrir
+            // Deixa links de anexo funcionarem
             if (targetElement.tagName === 'A' && targetElement.hasAttribute('href') && targetElement.target === '_blank') {
                 return;
             }
-
-            // Se chegou aqui, é um BOTÃO ou um link que não deveria navegar
-            e.preventDefault(); // Previne ação padrão para botões e links não-anexo
+             // Previne ação padrão para botões
+            e.preventDefault();
 
             const id = targetElement.dataset.id;
             const action = targetElement.dataset.action;
 
             if (action === 'view-record') {
-                openRecordForm(id);
+                openRecordForm(id); // Chama com ID para editar/ver
             } else if (action === 'print-record') {
                 printSingleRecord(id);
             } else if (action === 'delete-record') {
                 if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
                 try {
+                    setLoading(targetElement, 'Excluindo...'); // Mostra loading no botão de excluir
                     const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast("Registo apagado.");
-                    await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
-                } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
+                    await fetchAllData(); // Recarrega TUDO
+                } catch (error) {
+                    showToast(`Erro ao excluir: ${error.message}`, true);
+                    unsetLoading(targetElement); // Remove loading em caso de erro
+                }
+                // Não precisa de unsetLoading no sucesso porque a tabela será redesenhada
             }
         });
     }
@@ -549,7 +561,7 @@ export function initRecordsModule() {
             if (!button || button.disabled) return;
             const pageToGo = parseInt(button.dataset.page, 10);
             if (pageToGo !== state.mainTable.currentPage) {
-                 fetchRecordsPage(pageToGo);
+                 fetchRecordsPage(pageToGo); // Busca e renderiza a nova página
             }
         });
     }
@@ -566,10 +578,10 @@ export function initRecordsModule() {
             const isEditing = !!recordId;
             setLoading(saveButton);
             let success = false;
-            let createdRecordDataForPrint = null; // Renomeado para clareza
+            let createdRecordDataForPrint = null;
 
             try {
-                // Uploads primeiro
+                // Uploads
                 const deliveryTermFile = document.getElementById('deliveryTermAttachment');
                 const returnTermFile = document.getElementById('returnTermAttachment');
                 const policeReportFile = document.getElementById('policeReportAttachment');
@@ -577,16 +589,16 @@ export function initRecordsModule() {
                 const returnTermUrl = returnTermFile.files.length > 0 ? await handleFileUpload(returnTermFile) : null;
                 const policeReportUrl = policeReportFile.files.length > 0 ? await handleFileUpload(policeReportFile) : null;
 
-                // Monta payload
+                // Payload
                 let recordData;
                 if (isEditing) {
                      recordData = { returnDate: document.getElementById('returnDate').value || null, returnCondition: document.getElementById('returnCondition').value || null, returnNotes: document.getElementById('returnNotes').value, returnChecker: document.getElementById('returnChecker').value || state.currentUser?.nome || null, currentUser: state.currentUser, ...(deliveryTermUrl && { deliveryTermUrl: deliveryTermUrl }), ...(returnTermUrl && { returnTermUrl: returnTermUrl }), ...(policeReportUrl && { policeReportUrl: policeReportUrl }), };
                 } else {
-                     recordData = { employeeMatricula: document.getElementById('employeeSelect').value, deviceImei: document.getElementById('deviceSelect').value, deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), deliveryChecker: state.currentUser?.nome || 'Sistema', currentUser: state.currentUser, deliveryTermUrl: deliveryTermUrl }; // Garante deliveryChecker
+                     recordData = { employeeMatricula: document.getElementById('employeeSelect').value, deviceImei: document.getElementById('deviceSelect').value, deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), deliveryChecker: state.currentUser?.nome || 'Sistema', currentUser: state.currentUser, deliveryTermUrl: deliveryTermUrl };
                      if (!recordData.employeeMatricula || !recordData.deviceImei || !recordData.deliveryDate) { throw new Error("Funcionário, Aparelho e Data de Entrega são obrigatórios."); }
                 }
 
-                // Envia request
+                // Request
                 const url = isEditing ? `${API_URL}/api/records/${recordId}` : `${API_URL}/api/records/`;
                 const method = isEditing ? 'PUT' : 'POST';
                 const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recordData) });
@@ -596,19 +608,17 @@ export function initRecordsModule() {
                 // Sucesso
                 success = true;
                 showToast(result.message);
-
-                // Prepara dados para impressão SE FOR CRIAÇÃO
                 if (method === 'POST' && result.newRecord) {
-                     const employee = state.employees.find(e => e.id === recordData.employeeMatricula); // Usa matricula
+                     const employee = state.employees.find(e => e.id === recordData.employeeMatricula);
                      createdRecordDataForPrint = { ...result.newRecord, deliveryDate: recordData.deliveryDate, deliveryCondition: recordData.deliveryCondition, deliveryNotes: recordData.deliveryNotes, accessories: recordData.accessories, delivery_checker: recordData.deliveryChecker, employeePosition: employee?.position || 'N/A' };
                 }
 
-                closeModal(recordModal); // Fecha modal ANTES de recarregar dados
-                await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
+                closeModal(recordModal); // Fecha modal
+                await fetchAllData(); // Recarrega TUDO
 
             } catch (error) {
                 console.error("Erro ao salvar o termo:", error);
-                success = false; // Garante que não imprima em caso de erro
+                success = false;
                 if (error.message && error.message.includes('já está associado ao termo')) {
                     const termoId = extractTermoIdFromError(error.message);
                     if (termoId) { showConflictModal(error.message, termoId); }
@@ -618,42 +628,40 @@ export function initRecordsModule() {
                 unsetLoading(saveButton);
                 isSubmitting = false;
 
-                // Imprime SE foi sucesso E SE criou um novo registo
+                // Imprime SE SUCESSO e SE CRIAÇÃO
                 if (success && createdRecordDataForPrint) {
-                    try {
-                        await printSingleRecord(createdRecordDataForPrint); // Chama com os dados preparados
-                    } catch (printError) { console.error("Erro durante a impressão automática:", printError); showToast("Termo salvo, mas houve erro ao gerar a impressão.", true); }
+                    try { await printSingleRecord(createdRecordDataForPrint); }
+                    catch (printError) { console.error("Erro impressão automática:", printError); showToast("Termo salvo, mas erro ao gerar impressão.", true); }
                 }
             }
         });
     }
 
-    // Listener botão Imprimir DENTRO do modal (COM FLAG isPrinting)
+    // Listener botão Imprimir DENTRO do modal
     const printTermBtn = document.getElementById('print-term-btn');
     if(printTermBtn) {
         printTermBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-            if (isPrinting) { console.warn("Impressão já em andamento, ignorando."); return; }
+            if (isPrinting) { console.warn("Impressão já em andamento."); return; }
 
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
-                printSingleRecord(parseInt(recordId, 10)); // Edição: busca dados frescos
+                printSingleRecord(parseInt(recordId, 10)); // Edição
             } else {
-                 // Novo Termo: imprime com dados do form
-                 isPrinting = true; // Define flag aqui
+                 // Novo Termo
+                 isPrinting = true;
                  try {
                      const employeeSelect = document.getElementById('employeeSelect');
                      const deviceSelect = document.getElementById('deviceSelect');
-                     const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value); // Usa matricula
+                     const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value);
                      const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
-                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); isPrinting = false; return; } // Validação e reseta flag
+                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); return; } // Valida
                      const formDataForPrint = { id: 'Novo', employeeName: selectedEmployee.name, employeeMatricula: selectedEmployee.id, employeePosition: selectedEmployee.position, deviceModel: selectedDevice.model, deviceImei: selectedDevice.imei1, deviceLine: document.getElementById('deviceLineDisplay').value || 'N/A', deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), delivery_checker: state.currentUser?.nome || 'N/A', data_devolucao: null, condicao_devolucao: null, notas_devolucao: null, return_checker: null };
                      const content = generatePrintableTermHTML(formDataForPrint);
-                     printContent(content); // Chama window.print()
+                     printContent(content);
                  } finally {
-                     // Reseta flag APÓS printContent (que chama window.print bloqueante)
-                     setTimeout(() => { isPrinting = false; }, 500);
+                    setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
                  }
             }
         });
