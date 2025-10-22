@@ -129,25 +129,38 @@ function renderPaginationControls() {
 }
 
 export function renderMainTable() {
-    // ... (código da função inalterado, incluindo a correção da data) ...
     const recordsTableBody = document.getElementById('records-table-body');
     const noRecordsMessage = document.getElementById('no-records-message');
     if (!recordsTableBody || !noRecordsMessage) return;
 
-    recordsTableBody.innerHTML = '';
-    if (!state.records || state.records.length === 0) {
+    recordsTableBody.innerHTML = ''; // Limpa tabela
+    if (!state.records || state.records.length === 0) { // Verifica se state.records existe
         noRecordsMessage.classList.remove('hidden');
         recordsTableBody.style.display = 'none';
     } else {
         noRecordsMessage.classList.add('hidden');
-        recordsTableBody.style.display = '';
+        recordsTableBody.style.display = ''; // Garante que a tabela é visível
         const getStatusBadge = (s) => s === 'Devolvido' ? { text: 'Devolvido', class: 'bg-green-100 text-green-800' } : { text: 'Em Uso', class: 'bg-blue-100 text-blue-800' };
 
+        // Preenche a tabela com os dados
         state.records.forEach(r => {
             const status = getStatusBadge(r.status);
             const deliveryDateFormatted = r.deliveryDate
                 ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR')
                 : 'Data Inválida';
+
+            // --- INÍCIO DA MODIFICAÇÃO: Gerar botões de anexo ---
+            let attachmentButtons = '';
+            if (r.termo_entrega_url) {
+                attachmentButtons += `<a href="${r.termo_entrega_url}" target="_blank" class="text-blue-600 p-1" title="Ver Termo de Entrega"><i data-lucide="file-text"></i></a>`;
+            }
+            if (r.termo_devolucao_url) {
+                attachmentButtons += `<a href="${r.termo_devolucao_url}" target="_blank" class="text-green-600 p-1" title="Ver Termo de Devolução"><i data-lucide="file-check-2"></i></a>`;
+            }
+            if (r.bo_url) {
+                attachmentButtons += `<a href="${r.bo_url}" target="_blank" class="text-orange-600 p-1" title="Ver B.O."><i data-lucide="alert-triangle"></i></a>`;
+            }
+            // --- FIM DA MODIFICAÇÃO ---
 
             recordsTableBody.innerHTML += `
                 <tr class="border-b hover:bg-gray-50">
@@ -155,12 +168,19 @@ export function renderMainTable() {
                     <td class="p-4">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
                     <td class="p-4">${deliveryDateFormatted}</td>
                     <td class="p-4"><span class="px-2 py-1 text-sm font-medium rounded-full ${status.class}">${status.text}</span></td>
-                    <td class="p-4 no-print"><div class="flex justify-center items-center gap-1"><button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1" title="Ver/Editar"><i data-lucide="file-pen-line"></i></button><button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1" title="Imprimir"><i data-lucide="printer"></i></button><button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1" title="Excluir"><i data-lucide="trash-2"></i></button></div></td>
+                    <td class="p-4 no-print">
+                        <div class="flex justify-center items-center gap-1">
+                            <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1" title="Ver/Editar"><i data-lucide="file-pen-line"></i></button>
+                            ${attachmentButtons} {/* <-- ADICIONADO: Insere os botões de anexo aqui */}
+                            <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1" title="Imprimir"><i data-lucide="printer"></i></button>
+                            <button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1" title="Excluir"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </td>
                 </tr>`;
         });
     }
-    renderPaginationControls();
-    if (window.lucide) lucide.createIcons();
+    renderPaginationControls(); // Atualiza controlos de paginação
+    if (window.lucide) lucide.createIcons(); // Atualiza ícones (incluindo os novos)
 }
 
 async function openRecordForm(recordId = null) {
@@ -575,3 +595,4 @@ export function initRecordsModule() {
     }
 
 } // Fim de initRecordsModule
+
