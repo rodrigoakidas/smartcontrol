@@ -339,63 +339,152 @@ function generatePrintableTermHTML(data) {
     // Define o nome de quem entregou
     const delivererName = data.delivery_checker || state.currentUser?.nome || 'N/A';
 
-    // --- Seção de Devolução ---
+    // --- Seção de Devolução (Com Classes CSS) ---
     let returnSectionHTML = '';
     const returnDateStr = data.data_devolucao || data.returnDate;
-    
+
     if (returnDateStr) {
         const returnDate = new Date(returnDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR');
         const receiverName = data.return_checker || state.currentUser?.nome || 'N/A';
 
-        // --- MUDANÇAS DE COMPACTAÇÃO AQUI ---
         returnSectionHTML = `
-            <div style="page-break-before: always; padding-top: 20px;">
-                <h3 style="font-size:14px; font-weight:700; margin: 20px 0 12px 0; border-bottom:2px solid #333; padding-bottom:6px;">
-                    4. TERMO DE DEVOLUÇÃO
-                </h3>
-                
-                <table style="width:100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
+            <div class="return-section">
+                <h3 class="section-title">4. TERMO DE DEVOLUÇÃO</h3>
+                <table class="data-table">
                     <tr>
-                        <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${returnDate}</td>
+                        <td class="data-label">Data de Devolução:</td>
+                        <td>${returnDate}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td>
+                        <td class="data-label">Condição:</td>
+                        <td>${data.condicao_devolucao || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${data.notas_devolucao || 'Nenhuma observação'}</td>
+                        <td class="data-label">Observações:</td>
+                        <td>${data.notas_devolucao || 'Nenhuma observação'}</td>
                     </tr>
                     <tr>
-                        <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Recebido por:</td>
-                        <td style="padding:6px; border:1px solid #ddd;">${receiverName}</td>
+                        <td class="data-label">Recebido por:</td>
+                        <td>${receiverName}</td>
                     </tr>
                 </table>
-                
-                <div style="background:#f0f0f0; padding:12px; border-radius:8px; margin:20px 0;">
-                    <p style="font-size:10px; line-height:1.5; margin:0;">
-                        <strong>Declaração do Funcionário:</strong><br>
-                        Declaro que devolvi o equipamento e todos os acessórios acima descritos, 
-                        nas condições informadas, e que não possuo mais a posse ou responsabilidade sobre os mesmos.
+                <div class="declaration-box">
+                    <p><strong>Declaração do Funcionário:</strong><br>
+                        Declaro que devolvi o equipamento e todos os acessórios acima descritos,
+                        nas condições informadas, e que não possuo mais a posse ou
+                        responsabilidade sobre os mesmos.
                     </p>
                 </div>
-                
-                <div style="margin-top:50px; display:flex; justify-content:space-around; text-align:center;">
-                    <div style="width:40%;">
-                        <div style="border-bottom:2px solid #000; height:40px; margin-bottom:8px;"></div>
-                        <p style="font-weight:600; margin:0; font-size:11px;">${data.employeeName || 'N/A'}</p>
-                        <p style="font-size:9px; color:#666; margin:0;">Assinatura do Funcionário</p>
+                <div class="signatures">
+                    <div class="signature-block">
+                        <div class="signature-line"></div>
+                        <p class="signature-name">${data.employeeName || 'N/A'}</p>
+                        <p class="signature-role">Assinatura do Funcionário</p>
                     </div>
-                    <div style="width:40%;">
-                        <div style="border-bottom:2px solid #000; height:40px; margin-bottom:8px;"></div>
-                        <p style="font-weight:600; margin:0; font-size:11px;">${receiverName}</p>
-                        <p style="font-size:9px; color:#666; margin:0;">Assinatura do Receptor</p>
+                    <div class="signature-block">
+                        <div class="signature-line"></div>
+                        <p class="signature-name">${receiverName}</p>
+                        <p class="signature-role">Assinatura do Receptor</p>
                     </div>
                 </div>
             </div>`;
     }
 
+    // --- Estrutura Principal (Com Classes CSS) ---
+    return `
+        <div class="print-container">
+            ${getReportHeader()}
+
+            <h1 class="term-title">
+                TERMO DE RESPONSABILIDADE Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'}
+            </h1>
+
+            <h3 class="section-title">1. DADOS DO FUNCIONÁRIO</h3>
+            <table class="data-table">
+                <tr>
+                    <td class="data-label">Nome Completo:</td>
+                    <td>${data.employeeName || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Matrícula:</td>
+                    <td>${data.employeeMatricula || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Cargo:</td>
+                    <td>${data.employeePosition || 'N/A'}</td>
+                </tr>
+            </table>
+
+            <h3 class="section-title">2. DADOS DO EQUIPAMENTO</h3>
+            <table class="data-table">
+                <tr>
+                    <td class="data-label">Modelo:</td>
+                    <td>${data.deviceModel || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">IMEI Principal:</td>
+                    <td>${data.deviceImei || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Linha Telefónica:</td>
+                    <td>${data.deviceLine || 'Sem linha vinculada'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Acessórios Inclusos:</td>
+                    <td>${accessoriesList}</td>
+                </tr>
+            </table>
+
+            <h3 class="section-title">3. TERMO DE ENTREGA</h3>
+            <table class="data-table">
+                <tr>
+                    <td class="data-label">Data de Entrega:</td>
+                    <td>${deliveryDate}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Condição:</td>
+                    <td>${data.condicao_entrega || data.deliveryCondition || 'N/A'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Observações:</td>
+                    <td>${data.notas_entrega || data.deliveryNotes || 'Nenhuma observação'}</td>
+                </tr>
+                <tr>
+                    <td class="data-label">Entregue por:</td>
+                    <td>${delivererName}</td>
+                </tr>
+            </table>
+
+            <div class="declaration-box">
+                <p><strong>Declaração do Funcionário:</strong><br>
+                    Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições,
+                    responsabilizando-me por sua guarda, conservação e uso adequado durante o período em que
+                    estiver sob minha posse. Comprometo-me a devolver o equipamento nas mesmas condições de uso,
+                    ressalvado o desgaste natural. Em caso de perda, roubo ou dano intencional, assumo a
+                    responsabilidade pelos prejuízos causados.
+                </p>
+            </div>
+
+            <div class="signatures">
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <p class="signature-name">${data.employeeName || 'N/A'}</p>
+                    <p class="signature-role">Assinatura do Funcionário</p>
+                </div>
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <p class="signature-name">${delivererName}</p>
+                    <p class="signature-role">Assinatura do Responsável</p>
+                </div>
+            </div>
+
+            ${returnSectionHTML}
+
+            <div class="footer-print">
+                <p>Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+        </div>`;
+}
     // --- MUDANÇAS DE COMPACTAÇÃO AQUI ---
     return `
         <div style="padding:15px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:11px; color:#000; max-width:800px; margin:0 auto;">
@@ -835,5 +924,6 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
 
 
