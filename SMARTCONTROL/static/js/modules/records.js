@@ -1,23 +1,20 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO COM FLAG isPrinting PARA EVITAR IMPRESSÃO DUPLA)
+// (VERSÃO COMPLETA E CORRIGIDA - Inclui Ícones de Anexo e Flag isPrinting)
 
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
 import { API_URL, fetchItemById, handleFileUpload } from './api.js';
 import { getReportHeader, printContent } from './reports.js';
 
-// --- ADICIONADO: Flag para controlar impressão ---
+// Flag para controlar impressão
 let isPrinting = false;
-// --- FIM DA ADIÇÃO ---
 
 function extractTermoIdFromError(errorMessage) {
-    // ... (código da função inalterado) ...
     const match = errorMessage.match(/Nº\s*(\d+)/);
     return match ? parseInt(match[1], 10) : null;
 }
 
 function showConflictModal(errorMessage, termoId) {
-    // ... (código da função inalterado) ...
     const existingModal = document.getElementById('conflict-modal');
     if (existingModal) existingModal.remove();
 
@@ -48,7 +45,6 @@ function showConflictModal(errorMessage, termoId) {
             </div>
         </div>
     `;
-
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     if (window.lucide) {
         lucide.createIcons();
@@ -56,7 +52,6 @@ function showConflictModal(errorMessage, termoId) {
 }
 
 window.closeConflictModal = function() {
-    // ... (código da função inalterado) ...
     const modal = document.getElementById('conflict-modal');
     if (modal) {
         modal.remove();
@@ -64,7 +59,6 @@ window.closeConflictModal = function() {
 };
 
 window.viewExistingTermo = async function(termoId) {
-    // ... (código da função inalterado) ...
     window.closeConflictModal();
     const recordModal = document.getElementById('record-modal');
     closeModal(recordModal);
@@ -73,14 +67,15 @@ window.viewExistingTermo = async function(termoId) {
 };
 
 export async function fetchRecordsPage(page) {
-    // ... (código da função inalterado) ...
     const { recordsPerPage, filter } = state.mainTable;
     try {
         const data = await fetch(`${API_URL}/api/records?page=${page}&limit=${recordsPerPage}&filter=${filter}`).then(res => res.json());
-        state.mainTable.currentPage = page;
-        state.mainTable.totalRecords = data.total;
-        state.records = data.records;
-        renderMainTable();
+        // Garante que currentPage seja atualizado antes de renderizar
+        updateState({ 
+            mainTable: { ...state.mainTable, currentPage: page, totalRecords: data.total },
+            records: data.records 
+        });
+        renderMainTable(); // Renderiza APENAS AQUI após atualizar o state
     } catch (error) {
         showToast("Erro ao carregar movimentações.", true);
         console.error("Falha ao buscar registros:", error);
@@ -88,7 +83,6 @@ export async function fetchRecordsPage(page) {
 }
 
 function renderPaginationControls() {
-    // ... (código da função inalterado) ...
     const { currentPage, totalRecords, recordsPerPage } = state.mainTable;
     const totalPages = Math.ceil(totalRecords / recordsPerPage);
     const infoEl = document.getElementById('pagination-info');
@@ -128,28 +122,32 @@ function renderPaginationControls() {
     buttonsEl.innerHTML = buttonsHTML;
 }
 
+// Função para renderizar a tabela principal (COM ÍCONES DE ANEXO)
 export function renderMainTable() {
     const recordsTableBody = document.getElementById('records-table-body');
     const noRecordsMessage = document.getElementById('no-records-message');
+    //console.log("Rendering main table with records:", state.records); // Log para depuração
+
     if (!recordsTableBody || !noRecordsMessage) return;
 
-    recordsTableBody.innerHTML = ''; // Limpa tabela
-    if (!state.records || state.records.length === 0) { // Verifica se state.records existe
+    // Limpa a tabela ANTES de adicionar novas linhas
+    recordsTableBody.innerHTML = '';
+
+    if (!state.records || state.records.length === 0) {
         noRecordsMessage.classList.remove('hidden');
         recordsTableBody.style.display = 'none';
     } else {
         noRecordsMessage.classList.add('hidden');
-        recordsTableBody.style.display = ''; // Garante que a tabela é visível
+        recordsTableBody.style.display = '';
         const getStatusBadge = (s) => s === 'Devolvido' ? { text: 'Devolvido', class: 'bg-green-100 text-green-800' } : { text: 'Em Uso', class: 'bg-blue-100 text-blue-800' };
 
-        // Preenche a tabela com os dados
         state.records.forEach(r => {
             const status = getStatusBadge(r.status);
             const deliveryDateFormatted = r.deliveryDate
                 ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR')
                 : 'Data Inválida';
 
-            // --- INÍCIO DA MODIFICAÇÃO: Gerar botões de anexo ---
+            // Gerar botões de anexo
             let attachmentButtons = '';
             if (r.termo_entrega_url) {
                 attachmentButtons += `<a href="${r.termo_entrega_url}" target="_blank" class="text-blue-600 p-1" title="Ver Termo de Entrega"><i data-lucide="file-text"></i></a>`;
@@ -160,27 +158,30 @@ export function renderMainTable() {
             if (r.bo_url) {
                 attachmentButtons += `<a href="${r.bo_url}" target="_blank" class="text-orange-600 p-1" title="Ver B.O."><i data-lucide="alert-triangle"></i></a>`;
             }
-            // --- FIM DA MODIFICAÇÃO ---
 
-            recordsTableBody.innerHTML += `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="p-4">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
-                    <td class="p-4">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
-                    <td class="p-4">${deliveryDateFormatted}</td>
-                    <td class="p-4"><span class="px-2 py-1 text-sm font-medium rounded-full ${status.class}">${status.text}</span></td>
-                    <td class="p-4 no-print">
-                        <div class="flex justify-center items-center gap-1">
-                            <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1" title="Ver/Editar"><i data-lucide="file-pen-line"></i></button>
-                            ${attachmentButtons} {/* <-- ADICIONADO: Insere os botões de anexo aqui */}
-                            <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1" title="Imprimir"><i data-lucide="printer"></i></button>
-                            <button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1" title="Excluir"><i data-lucide="trash-2"></i></button>
-                        </div>
-                    </td>
-                </tr>`;
+            // Adiciona a linha (usando appendChild em vez de innerHTML += para segurança e performance ligeiramente melhor)
+            const row = document.createElement('tr');
+            row.className = 'border-b hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="p-4">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
+                <td class="p-4">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
+                <td class="p-4">${deliveryDateFormatted}</td>
+                <td class="p-4"><span class="px-2 py-1 text-sm font-medium rounded-full ${status.class}">${status.text}</span></td>
+                <td class="p-4 no-print">
+                    <div class="flex justify-center items-center gap-1">
+                        <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1" title="Ver/Editar"><i data-lucide="file-pen-line"></i></button>
+                        ${attachmentButtons} {/* Insere os botões de anexo aqui */}
+                        <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1" title="Imprimir"><i data-lucide="printer"></i></button>
+                        <button data-action="delete-record" data-id="${r.id}" class="text-red-600 p-1" title="Excluir"><i data-lucide="trash-2"></i></button>
+                    </div>
+                </td>
+            `;
+            recordsTableBody.appendChild(row);
+
         });
     }
-    renderPaginationControls(); // Atualiza controlos de paginação
-    if (window.lucide) lucide.createIcons(); // Atualiza ícones (incluindo os novos)
+    renderPaginationControls();
+    if (window.lucide) lucide.createIcons();
 }
 
 async function openRecordForm(recordId = null) {
@@ -370,19 +371,12 @@ function generatePrintableTermHTML(data) {
         </div>`;
 }
 
-// Função auxiliar para imprimir - MODIFICADA COM FLAG isPrinting
+// Função auxiliar para imprimir (COM FLAG isPrinting)
 async function printSingleRecord(recordOrData) {
-    // --- ADICIONADO: Verifica flag ---
-    if (isPrinting) {
-        console.log("Impressão já em andamento, ignorando.");
-        return;
-    }
-    // --- FIM DA ADIÇÃO ---
-
-    isPrinting = true; // --- ADICIONADO: Define flag ---
+    if (isPrinting) { console.log("Impressão já em andamento, ignorando."); return; }
+    isPrinting = true;
     showToast('A gerar termo para impressão...');
     let recordDataToPrint;
-
     try {
         if (typeof recordOrData === 'object' && recordOrData !== null) {
             const employee = state.employees.find(e => e.id === recordOrData.employeeMatricula);
@@ -394,110 +388,97 @@ async function printSingleRecord(recordOrData) {
              if (!record) throw new Error('Registo não encontrado para impressão.');
              const employee = state.employees.find(e => e.id === record.employeeMatricula);
              recordDataToPrint = { ...record, employeeName: employee?.name || record.employeeMatricula, employeePosition: employee?.position || 'N/A' };
-        } else {
-            throw new Error('Dados inválidos fornecidos para impressão.');
-        }
-
-        if (!recordDataToPrint) {
-            throw new Error('Não foi possível obter os dados para impressão.');
-        }
-
+        } else { throw new Error('Dados inválidos fornecidos para impressão.'); }
+        if (!recordDataToPrint) { throw new Error('Não foi possível obter os dados para impressão.'); }
         const content = generatePrintableTermHTML(recordDataToPrint);
-        printContent(content); // Chama a função que executa window.print()
-
+        printContent(content);
     } catch (error) {
         showToast(`Erro ao imprimir: ${error.message}`, true);
         console.error("Erro ao imprimir termo:", error);
     } finally {
-        // --- ADICIONADO: Reseta flag após impressão ---
-        // Usamos um pequeno timeout para garantir que o navegador resetou do window.print()
-        setTimeout(() => {
-            isPrinting = false;
-        }, 500); // Meio segundo deve ser suficiente
-        // --- FIM DA ADIÇÃO ---
+        setTimeout(() => { isPrinting = false; }, 500);
     }
 }
 
 
 export function initRecordsModule() {
-    // ... (código da função inalterado até o listener do #print-term-btn) ...
     const recordModal = document.getElementById('record-modal');
     const recordForm = document.getElementById('record-form');
     const deviceSelect = document.getElementById('deviceSelect');
     let isSubmitting = false;
 
-    if (deviceSelect) { /* ... listener 'change' inalterado ... */
+    if (deviceSelect) {
         deviceSelect.addEventListener('change', (e) => {
             const selectedImei = e.target.value;
             const device = state.devices.find(d => d.imei1 === selectedImei);
             const lineDisplay = document.getElementById('deviceLineDisplay');
-            if (lineDisplay) {
-                lineDisplay.value = device?.currentLine || 'Nenhuma';
-            }
+            if (lineDisplay) { lineDisplay.value = device?.currentLine || 'Nenhuma'; }
         });
     }
 
     const addRecordBtn = document.getElementById('add-record-btn');
-    if (addRecordBtn) { /* ... listener 'click' inalterado ... */
-         addRecordBtn.addEventListener('click', () => openRecordForm());
-    }
+    if (addRecordBtn) { addRecordBtn.addEventListener('click', () => openRecordForm()); }
 
     const cancelBtn = document.getElementById('cancel-btn');
-     if (cancelBtn) { /* ... listener 'click' inalterado ... */
-         cancelBtn.addEventListener('click', () => closeModal(recordModal));
-     }
+    if (cancelBtn) { cancelBtn.addEventListener('click', () => closeModal(recordModal)); }
 
     const filterContainer = document.getElementById('filter-container');
-     if (filterContainer) { /* ... listener 'click' inalterado ... */
+    if (filterContainer) {
         filterContainer.addEventListener('click', (e) => {
             const button = e.target.closest('.filter-btn');
             if (!button) return;
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-gray-200'));
             button.classList.replace('bg-gray-200', 'bg-blue-600');
             state.mainTable.filter = button.dataset.filter;
-            fetchRecordsPage(1);
+            fetchRecordsPage(1); // Chama fetchRecordsPage que atualiza state E renderiza
         });
     }
 
     const recordsTableBody = document.getElementById('records-table-body');
-     if (recordsTableBody) {
+    if (recordsTableBody) {
         recordsTableBody.addEventListener('click', async (e) => {
-            const button = e.target.closest('button[data-action]');
+            const button = e.target.closest('button[data-action], a[data-action]'); // Inclui links 'a'
             if (!button) return;
+
+            // Previne ação padrão SE FOR UM LINK (para não navegar)
+            if (button.tagName === 'A') {
+                e.preventDefault();
+            }
+
             const id = button.dataset.id;
             const action = button.dataset.action;
 
             if (action === 'view-record') {
                 openRecordForm(id);
             } else if (action === 'print-record') {
-                // --- MODIFICADO: Chama printSingleRecord com a flag ---
-                printSingleRecord(id);
+                printSingleRecord(id); // Chama a função com flag
             } else if (action === 'delete-record') {
-                // ... (código do delete inalterado) ...
                 if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
                 try {
                     const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast("Registo apagado.");
-                    await fetchAllData();
+                    await fetchAllData(); // Recarrega tudo
                 } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
             }
+            // Não precisa de 'else' para os links de anexo, o clique padrão já abre em nova aba
         });
     }
 
-     const paginationControls = document.getElementById('pagination-controls');
-     if(paginationControls) { /* ... listener 'click' inalterado ... */
+    const paginationControls = document.getElementById('pagination-controls');
+    if(paginationControls) {
         paginationControls.addEventListener('click', (e) => {
             const button = e.target.closest('button[data-page]');
             if (!button || button.disabled) return;
-            fetchRecordsPage(parseInt(button.dataset.page, 10));
+            fetchRecordsPage(parseInt(button.dataset.page, 10)); // Chama fetchRecordsPage que atualiza state E renderiza
         });
     }
 
-    if (recordForm) { /* ... listener 'submit' inalterado ... */
+    if (recordForm) {
         recordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            // ... (código do submit inalterado, já chama fetchAllData) ...
+             e.preventDefault();
             if (isSubmitting) { console.warn("Submissão já em progresso."); return; }
             isSubmitting = true;
             const saveButton = recordForm.querySelector('button[type="submit"]');
@@ -532,7 +513,7 @@ export function initRecordsModule() {
                      const employee = state.employees.find(e => e.id === recordData.employeeMatricula);
                      printData = { ...result.newRecord, deliveryDate: recordData.deliveryDate, deliveryCondition: recordData.deliveryCondition, deliveryNotes: recordData.deliveryNotes, accessories: recordData.accessories, delivery_checker: recordData.deliveryChecker, employeePosition: employee?.position || 'N/A' };
                 }
-                await fetchAllData();
+                await fetchAllData(); // Chama fetchAllData que chama fetchRecordsPage que renderiza
                 closeModal(recordModal);
             } catch (error) {
                 console.error("Erro ao salvar o termo:", error);
@@ -546,8 +527,7 @@ export function initRecordsModule() {
                 isSubmitting = false;
                 if (success && printData) {
                     try {
-                        // --- MODIFICADO: Chama printSingleRecord com a flag ---
-                        await printSingleRecord(printData);
+                        await printSingleRecord(printData); // Chama a função com flag
                     } catch (printError) { console.error("Erro durante a impressão automática:", printError); showToast("Termo salvo, mas houve erro ao gerar a impressão.", true); }
                 }
             }
@@ -555,25 +535,16 @@ export function initRecordsModule() {
     }
 
     const printTermBtn = document.getElementById('print-term-btn');
-     if(printTermBtn) {
+    if(printTermBtn) {
         printTermBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
-
-            // --- ADICIONADO: Verifica flag ---
-            if (isPrinting) {
-                console.log("Impressão já em andamento, ignorando.");
-                return;
-            }
-            // --- FIM DA ADIÇÃO ---
-
+            if (isPrinting) { console.log("Impressão já em andamento, ignorando."); return; }
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
-                // --- MODIFICADO: Chama printSingleRecord com a flag ---
-                printSingleRecord(parseInt(recordId, 10));
+                printSingleRecord(parseInt(recordId, 10)); // Chama a função com flag
             } else {
-                 // --- ADICIONADO: Define flag e try/finally ---
-                 isPrinting = true;
+                 isPrinting = true; // Define flag para "Novo Termo"
                  try {
                      const employeeSelect = document.getElementById('employeeSelect');
                      const deviceSelect = document.getElementById('deviceSelect');
@@ -584,15 +555,10 @@ export function initRecordsModule() {
                      const content = generatePrintableTermHTML(formDataForPrint);
                      printContent(content);
                  } finally {
-                    // Usamos um pequeno timeout para garantir que o navegador resetou do window.print()
-                    setTimeout(() => {
-                        isPrinting = false;
-                    }, 500);
+                    setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
                  }
-                 // --- FIM DA ADIÇÃO ---
             }
         });
     }
 
 } // Fim de initRecordsModule
-
