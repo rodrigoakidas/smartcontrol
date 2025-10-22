@@ -780,11 +780,12 @@ export function initRecordsModule() {
     });
 
     // Listener para o botão "Imprimir" DENTRO do modal
-   const printTermBtn = document.getElementById('print-term-btn');
+  const printTermBtn = document.getElementById('print-term-btn');
      if(printTermBtn) {
-        printTermBtn.addEventListener('click', (e) => { // <--- Adicionado 'e'
+        printTermBtn.addEventListener('click', (e) => { // <--- Função com 'e'
             e.stopPropagation(); // <--- IMPEDE PROPAGAÇÃO DO EVENTO
-            
+            e.preventDefault();  // <--- IMPEDE AÇÃO PADRÃO DO BOTÃO
+
             const recordId = document.getElementById('record-id').value;
             if (recordId) {
                 // Se está a editar (tem ID), busca os dados mais recentes para imprimir
@@ -793,7 +794,7 @@ export function initRecordsModule() {
                  // Se é um novo termo (sem ID), imprime com os dados atuais do formulário
                  const employeeSelect = document.getElementById('employeeSelect');
                  const deviceSelect = document.getElementById('deviceSelect');
-                 const selectedEmployee = state.employees.find(e => e.id === employeeSelect.value);
+                 const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value);
                  const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
 
                  // Verifica se selecionou funcionário e aparelho
@@ -829,8 +830,8 @@ export function initRecordsModule() {
         });
     }
 
-
 } // Fim de initRecordsModule
+
 
 
 
