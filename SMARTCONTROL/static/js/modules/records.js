@@ -339,7 +339,7 @@ function generatePrintableTermHTML(data) {
     // Define o nome de quem entregou
     const delivererName = data.delivery_checker || state.currentUser?.nome || 'N/A';
 
-    // --- Seção de Devolução (Com Classes CSS) ---
+    // --- Seção de Devolução (ULTRA COMPACTA) ---
     let returnSectionHTML = '';
     const returnDateStr = data.data_devolucao || data.returnDate;
 
@@ -347,50 +347,58 @@ function generatePrintableTermHTML(data) {
         const returnDate = new Date(returnDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR');
         const receiverName = data.return_checker || state.currentUser?.nome || 'N/A';
 
+        // Estilos ultra compactados
         returnSectionHTML = `
-            <div class="return-section">
-                <h3 class="section-title">4. TERMO DE DEVOLUÇÃO</h3>
-                <table class="data-table">
+            <div style="padding-top: 10px;">
+                <h3 style="font-size:12px; font-weight:700; margin: 10px 0 5px 0; border-bottom:1px solid #333; padding-bottom:3px;">
+                    4. TERMO DE DEVOLUÇÃO
+                </h3>
+
+                <table style="width:100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9px;">
                     <tr>
-                        <td class="data-label">Data de Devolução:</td>
-                        <td>${returnDate}</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd;">${returnDate}</td>
                     </tr>
                     <tr>
-                        <td class="data-label">Condição:</td>
-                        <td>${data.condicao_devolucao || 'N/A'}</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td>
                     </tr>
                     <tr>
-                        <td class="data-label">Observações:</td>
-                        <td>${data.notas_devolucao || 'Nenhuma observação'}</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd;">${data.notas_devolucao || 'Nenhuma observação'}</td>
                     </tr>
                     <tr>
-                        <td class="data-label">Recebido por:</td>
-                        <td>${receiverName}</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Recebido por:</td>
+                        <td style="padding:3px 4px; border:1px solid #ddd;">${receiverName}</td>
                     </tr>
                 </table>
-                <div class="declaration-box">
-                    <p><strong>Declaração do Funcionário:</strong><br>
+
+                <div style="background:#f0f0f0; padding:6px 8px; border-radius:4px; margin:10px 0;">
+                    <p style="font-size:8px; line-height:1.3; margin:0;">
+                        <strong>Declaração do Funcionário:</strong><br>
                         Declaro que devolvi o equipamento e todos os acessórios acima descritos,
                         nas condições informadas, e que não possuo mais a posse ou
                         responsabilidade sobre os mesmos.
                     </p>
                 </div>
-                <div class="signatures">
-                    <div class="signature-block">
-                        <div class="signature-line"></div>
-                        <p class="signature-name">${data.employeeName || 'N/A'}</p>
-                        <p class="signature-role">Assinatura do Funcionário</p>
+
+                <div style="margin-top:15px; display:flex; justify-content:space-around; text-align:center;">
+                    <div style="width:40%;">
+                        <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div>
+                        <p style="font-weight:600; margin:0; font-size:9px;">${data.employeeName || 'N/A'}</p>
+                        <p style="font-size:7px; color:#666; margin:0;">Assinatura do Funcionário</p>
                     </div>
-                    <div class="signature-block">
-                        <div class="signature-line"></div>
-                        <p class="signature-name">${receiverName}</p>
-                        <p class="signature-role">Assinatura do Receptor</p>
+                    <div style="width:40%;">
+                        <div style="border-bottom:1px solid #000; height:20px; margin-bottom:3px;"></div>
+                        <p style="font-weight:600; margin:0; font-size:9px;">${receiverName}</p>
+                        <p style="font-size:7px; color:#666; margin:0;">Assinatura do Receptor</p>
                     </div>
                 </div>
             </div>`;
     }
 
-    // --- Estrutura Principal (Com Classes CSS) ---
+    // --- Estrutura Principal (ULTRA COMPACTA) ---
+    // AQUI DENTRO da função, o 'return `' está CORRETO
     return `
         <div class="print-container">
             ${getReportHeader()}
@@ -483,8 +491,8 @@ function generatePrintableTermHTML(data) {
             <div class="footer-print">
                 <p>Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
             </div>
-        </div>`;
-}
+        </div>`; // ESTE ` fecha o return CORRETO da função
+} // ESTA é a chave que fecha a função generatePrintableTermHTML
     // --- MUDANÇAS DE COMPACTAÇÃO AQUI ---
     return `
         <div style="padding:15px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:11px; color:#000; max-width:800px; margin:0 auto;">
@@ -924,6 +932,7 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
 
 
 
