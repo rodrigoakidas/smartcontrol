@@ -1,5 +1,5 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO CORRIGIDA FINAL - Remove comentário visual e garante refresh no Novo Termo)
+// (VERSÃO CORRIGIDA FINAL FINAL - Remove comentário visual e garante refresh no Novo Termo)
 
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
@@ -185,7 +185,7 @@ export function renderMainTable() {
                 <td class="p-3 align-top">${deliveryDateFormatted}</td>
                 <td class="p-3 align-top"><span class="px-2 py-1 text-xs font-medium rounded-full ${status.class}">${status.text}</span></td>
                 <td class="p-3 no-print align-top">
-                    {/* O comentário foi removido desta div */}
+                    {/* <<< REMOVIDO O TEXTO DO COMENTÁRIO DAQUI >>> */}
                     <div class="flex justify-center items-center gap-1 flex-wrap">
                         <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1 hover:text-gray-800" title="Ver/Editar"><i data-lucide="file-pen-line" class="w-4 h-4"></i></button>
                         ${attachmentButtons}
@@ -212,30 +212,30 @@ export function renderMainTable() {
 
 // Abre o formulário de registo
 async function openRecordForm(recordId = null) {
+    const form = document.getElementById('record-form');
+    const modal = document.getElementById('record-modal');
+    if (!form || !modal) { console.error("Formulário ou Modal não encontrado!"); return; }
+
     // --- GARANTIR DADOS ATUALIZADOS PARA NOVO TERMO ---
     if (!recordId) {
-        showToast("A carregar dados atualizados...");
+        showToast("A carregar dados..."); // Feedback
         try {
-            await fetchAllData(); // Força a busca de TUDO antes de abrir
-            // Não precisa mostrar toast de sucesso aqui, só em caso de erro
+            // Chama fetchAllData() que atualiza state.employees, state.devices, etc.
+            await fetchAllData();
+            // Não precisa de toast de sucesso aqui, o formulário abrirá
         } catch (error) {
-            showToast("Erro ao carregar dados atualizados. Não é possível criar novo termo.", true);
-            console.error("Falha ao carregar dados em openRecordForm:", error);
-            return; // Impede abrir o modal se os dados falharam
+            showToast("Erro crítico ao carregar dados. Tente recarregar a página.", true);
+            console.error("Falha fatal ao carregar dados em openRecordForm:", error);
+            return; // Impede abrir o modal se os dados essenciais falharam
         }
     }
     // --- FIM DA GARANTIA ---
 
-    const form = document.getElementById('record-form');
-    const modal = document.getElementById('record-modal');
-    if (!form || !modal) {
-        console.error("Formulário ou Modal de registo não encontrado!");
-        return;
-    }
-    form.reset(); // Limpa campos
-    document.getElementById('record-id').value = recordId || ''; // Define ID ou vazio
+    // Reseta o formulário APÓS garantir que os dados estão carregados (se for novo)
+    form.reset();
+    document.getElementById('record-id').value = recordId || '';
 
-    // Seletores dos elementos do formulário (declarados uma vez para clareza)
+    // Seletores (após reset)
     const employeeSelect = document.getElementById('employeeSelect');
     const deviceSelect = document.getElementById('deviceSelect');
     const viewDeliveryTermBtn = document.getElementById('viewDeliveryTermBtn');
@@ -251,54 +251,55 @@ async function openRecordForm(recordId = null) {
     const returnFieldset = document.getElementById('return-fieldset');
     const modalTitle = document.getElementById('modal-title');
 
-    // Reset estado visual/funcional dos anexos e seções
+    // Reset estado visual/funcional
     [viewDeliveryTermBtn, viewReturnTermBtn, viewPoliceReportBtn].forEach(btn => btn.classList.add('hidden'));
-    [deliveryTermInput, returnTermInput, policeReportInput].forEach(input => { input.value = ''; input.disabled = false; }); // Garante habilitado por padrão
+    [deliveryTermInput, returnTermInput, policeReportInput].forEach(input => { input.value = ''; input.disabled = false; });
     [returnTermSection, policeReportSection].forEach(section => section.style.display = 'none');
-    returnFieldset.classList.add('hidden'); // Esconde devolução por padrão
+    returnFieldset.classList.add('hidden'); // Esconde devolução
 
-    // Remove listener antigo e adiciona novo para condição de devolução
+    // Garante que o listener de condição de devolução está ativo
     if (returnConditionSelect) {
-        const newSelect = returnConditionSelect.cloneNode(true);
-        returnConditionSelect.parentNode.replaceChild(newSelect, returnConditionSelect);
-        newSelect.addEventListener('change', (e) => {
+        const currentListener = returnConditionSelect._changeListener; // Tenta pegar listener existente
+        if (currentListener) {
+            returnConditionSelect.removeEventListener('change', currentListener); // Remove se existir
+        }
+        const newListener = (e) => { // Cria a função do listener
             const condition = e.target.value;
-            // Mostra/Esconde seções corretas
             returnTermSection.style.display = (condition === 'Bom' || condition === 'Danificado') ? 'block' : 'none';
             policeReportSection.style.display = condition === 'Perda/Roubo' ? 'block' : 'none';
-            // Habilita/Desabilita inputs de ficheiro correspondentes
             returnTermInput.disabled = !(condition === 'Bom' || condition === 'Danificado');
             policeReportInput.disabled = !(condition === 'Perda/Roubo');
-        });
-         // Garante que os inputs estão no estado correto inicial (desabilitados)
-         returnTermInput.disabled = true;
-         policeReportInput.disabled = true;
+        };
+        returnConditionSelect.addEventListener('change', newListener); // Adiciona o novo
+        returnConditionSelect._changeListener = newListener; // Guarda referência
+        // Reseta estado inicial dos inputs de ficheiro de devolução
+        returnTermInput.disabled = true;
+        policeReportInput.disabled = true;
     }
 
     // --- LÓGICA DE EDIÇÃO ---
     if (recordId) {
         modalTitle.textContent = "Ver/Editar Termo";
-        // Desabilita campos de entrega (exceto upload, se necessário)
+        // Desabilita campos de entrega
         deliveryFieldset.querySelectorAll('select, input:not([type="file"]), textarea').forEach(el => el.disabled = true);
-        deliveryTermInput.disabled = false; // Permite anexar/substituir termo de entrega
+        deliveryTermInput.disabled = false; // Permite substituir
         // Mostra e habilita campos de devolução
         returnFieldset.classList.remove('hidden');
-        returnFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = false); // Habilita TODOS
+        returnFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
 
         try {
-            // Busca dados frescos do ID específico (pode ser redundante mas garante consistência)
-            const data = await fetchItemById('records', recordId);
+            const data = await fetchItemById('records', recordId); // Busca dados específicos
             if (!data) { closeModal(modal); showToast("Termo não encontrado.", true); return; }
 
-            // Preenche dados de ENTREGA (não editáveis, exceto anexo)
+            // Preenche Entrega (View Only)
             const employeeData = state.employees.find(e => e.id === data.employeeMatricula);
-            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected disabled>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`; // Adiciona disabled
-            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected disabled>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`; // Adiciona disabled
+            employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected disabled>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`;
+            deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected disabled>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`;
             document.getElementById('deviceLineDisplay').value = data.deviceLine || 'Nenhuma';
             document.getElementById('deliveryDate').value = formatDateForInput(data.data_entrega);
             document.getElementById('deliveryCondition').value = data.condicao_entrega || '';
             document.getElementById('deliveryNotes').value = data.notas_entrega || '';
-            document.querySelectorAll('input[name="accessories"]').forEach(cb => { cb.checked = false; cb.disabled = true; }); // Desabilita checkboxes
+            document.querySelectorAll('input[name="accessories"]').forEach(cb => { cb.checked = false; cb.disabled = true; });
             if (data.acessorios && Array.isArray(data.acessorios)) {
                 data.acessorios.forEach(acc => {
                     const cb = form.querySelector(`input[name="accessories"][value="${acc}"]`);
@@ -307,61 +308,64 @@ async function openRecordForm(recordId = null) {
             }
             if (data.termo_entrega_url) { viewDeliveryTermBtn.href = data.termo_entrega_url; viewDeliveryTermBtn.classList.remove('hidden'); }
 
-            // Preenche dados de DEVOLUÇÃO (editáveis)
+            // Preenche Devolução (Editável)
             document.getElementById('returnDate').value = formatDateForInput(data.data_devolucao);
-            const currentReturnConditionSelect = document.getElementById('returnCondition'); // Pega ref do select ATUALIZADO
-            currentReturnConditionSelect.value = data.condicao_devolucao || ''; // Define valor
+            const currentReturnConditionSelect = document.getElementById('returnCondition');
+            currentReturnConditionSelect.value = data.condicao_devolucao || '';
             document.getElementById('returnNotes').value = data.notas_devolucao || '';
             document.getElementById('returnChecker').value = data.return_checker || '';
             if (data.termo_devolucao_url) { viewReturnTermBtn.href = data.termo_devolucao_url; viewReturnTermBtn.classList.remove('hidden'); }
             if (data.bo_url) { viewPoliceReportBtn.href = data.bo_url; viewPoliceReportBtn.classList.remove('hidden'); }
 
-            // Dispara 'change' para garantir visibilidade correta das seções de anexo
+            // Dispara 'change' para estado visual inicial correto
             currentReturnConditionSelect.dispatchEvent(new Event('change'));
 
         } catch (error) {
-            showToast("Erro ao carregar detalhes para edição.", true);
-            console.error("Erro buscar detalhes edição:", error);
-            closeModal(modal);
-            return;
+            showToast("Erro ao carregar detalhes para edição.", true); console.error("Erro busca detalhes edição:", error); closeModal(modal); return;
         }
 
     // --- LÓGICA DE NOVO TERMO ---
     } else {
         modalTitle.textContent = "Novo Termo de Responsabilidade";
-        // Garante que campos de entrega estão habilitados
+        // Habilita entrega, esconde/desabilita devolução
         deliveryFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = false);
-        // Garante que campos de devolução estão escondidos e desabilitados
         returnFieldset.classList.add('hidden');
         returnFieldset.querySelectorAll('select, input, textarea').forEach(el => el.disabled = true);
 
-        // Popula dropdowns com dados JÁ ATUALIZADOS pelo fetchAllData no início
+        // Popula dropdowns com dados JÁ ATUALIZADOS do state
         employeeSelect.innerHTML = '<option value="">Selecione...</option>';
         if (state.employees && state.employees.length > 0) {
             state.employees.forEach(e => employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`);
-        } else {
-            employeeSelect.innerHTML = '<option value="">Nenhum funcionário carregado</option>';
-        }
+        } else { employeeSelect.innerHTML = '<option value="">Nenhum funcionário</option>'; }
 
         deviceSelect.innerHTML = '<option value="">Selecione...</option>';
-        // Filtra usando o estado ATUALIZADO de state.devices
+        // Filtra usando o estado ATUALIZADO
         const availableDevices = state.devices.filter(d => d.status === 'Disponível');
         if (availableDevices.length > 0) {
-            availableDevices.forEach(d => {
-                deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
-            });
-        } else {
-            deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
-        }
+            availableDevices.forEach(d => { deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`; });
+        } else { deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>'; }
 
-        // Preenche valores padrão
-        document.getElementById('deliveryDate').value = formatDateForInput(new Date()); // Data atual
-        document.getElementById('deliveryCondition').value = 'Novo'; // Default
-        document.getElementById('deviceLineDisplay').value = ''; // Limpa linha
-        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false); // Desmarca acessórios
-        document.getElementById('deliveryNotes').value = ''; // Limpa notas
+        // Defaults
+        document.getElementById('deliveryDate').value = formatDateForInput(new Date());
+        document.getElementById('deliveryCondition').value = 'Novo';
+        document.getElementById('deviceLineDisplay').value = '';
+        document.querySelectorAll('input[name="accessories"]').forEach(cb => cb.checked = false);
+        document.getElementById('deliveryNotes').value = '';
+        // Garante linha vazia se nenhum aparelho selecionado inicialmente
+        document.getElementById('deviceLineDisplay').value = 'Nenhuma';
+        // Adiciona listener para caso o primeiro aparelho selecionado já tenha linha
+        const firstChangeListener = (e) => {
+             const selectedImei = e.target.value;
+             const device = state.devices.find(d => d.imei1 === selectedImei);
+             const lineDisplay = document.getElementById('deviceLineDisplay');
+             if (lineDisplay) { lineDisplay.value = device?.currentLine || 'Nenhuma'; }
+             deviceSelect.removeEventListener('change', firstChangeListener); // Remove após primeiro uso
+        };
+        deviceSelect.addEventListener('change', firstChangeListener);
+
+
     }
-    openModal(modal); // Abre o modal no final
+    openModal(modal); // Abre o modal
 }
 
 
@@ -462,21 +466,21 @@ async function printSingleRecord(recordOrData) {
 export function initRecordsModule() {
     const recordModal = document.getElementById('record-modal');
     const recordForm = document.getElementById('record-form');
-    const deviceSelect = document.getElementById('deviceSelect');
     let isSubmitting = false; // Flag para submit
 
     // Listener para linha vinculada (associado ao deviceSelect)
-    if (deviceSelect) {
-        // Remove listener antigo se houver (importante se init for chamado múltiplas vezes)
-        const newSelect = deviceSelect.cloneNode(true);
-        deviceSelect.parentNode.replaceChild(newSelect, deviceSelect);
-        newSelect.addEventListener('change', (e) => {
-            const selectedImei = e.target.value;
-            const device = state.devices.find(d => d.imei1 === selectedImei);
-            const lineDisplay = document.getElementById('deviceLineDisplay');
-            if (lineDisplay) { lineDisplay.value = device?.currentLine || 'Nenhuma'; }
+    // Usamos event delegation no form para garantir que o listener funcione mesmo se o select for recriado
+    if(recordForm) {
+        recordForm.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'deviceSelect') {
+                const selectedImei = e.target.value;
+                const device = state.devices.find(d => d.imei1 === selectedImei);
+                const lineDisplay = document.getElementById('deviceLineDisplay');
+                if (lineDisplay) { lineDisplay.value = device?.currentLine || 'Nenhuma'; }
+            }
         });
     }
+
 
     const addRecordBtn = document.getElementById('add-record-btn');
     if (addRecordBtn) { addRecordBtn.addEventListener('click', () => openRecordForm()); } // Chama openRecordForm SEM ID
@@ -498,19 +502,18 @@ export function initRecordsModule() {
             });
             button.classList.replace('bg-gray-200', 'bg-blue-600');
             button.classList.replace('text-gray-700', 'text-white');
-            button.disabled = true; // Desabilita o botão ativo
+            button.disabled = true;
 
-            // Atualiza state e busca dados
             const newFilter = button.dataset.filter;
             if (state.mainTable.filter !== newFilter) {
-                 updateState({ mainTable: { ...state.mainTable, filter: newFilter, currentPage: 1 } }); // Reseta para página 1
-                 fetchRecordsPage(1); // Busca a página 1
+                 updateState({ mainTable: { ...state.mainTable, filter: newFilter, currentPage: 1 } });
+                 fetchRecordsPage(1);
             }
         });
          // Inicializa botão de filtro
          const initialFilter = state.mainTable.filter || 'Todos';
          const activeButton = filterContainer.querySelector(`.filter-btn[data-filter="${initialFilter}"]`);
-         if (activeButton && !activeButton.disabled) { activeButton.click(); } // Simula clique se não estiver ativo
+         if (activeButton && !activeButton.disabled) { activeButton.click(); }
     }
 
 
@@ -521,24 +524,22 @@ export function initRecordsModule() {
             const targetElement = e.target.closest('button[data-action], a[href]');
             if (!targetElement) return;
 
-            // Deixa links de anexo funcionarem
             if (targetElement.tagName === 'A' && targetElement.hasAttribute('href') && targetElement.target === '_blank') {
-                return;
+                return; // Deixa links de anexo funcionarem
             }
-             // Previne ação padrão para botões
-            e.preventDefault();
+            e.preventDefault(); // Previne ação padrão para botões
 
             const id = targetElement.dataset.id;
             const action = targetElement.dataset.action;
 
             if (action === 'view-record') {
-                openRecordForm(id); // Chama com ID para editar/ver
+                openRecordForm(id);
             } else if (action === 'print-record') {
                 printSingleRecord(id);
             } else if (action === 'delete-record') {
                 if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
                 try {
-                    setLoading(targetElement, 'Excluindo...'); // Mostra loading no botão de excluir
+                    setLoading(targetElement, 'Excluindo...');
                     const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
@@ -546,9 +547,8 @@ export function initRecordsModule() {
                     await fetchAllData(); // Recarrega TUDO
                 } catch (error) {
                     showToast(`Erro ao excluir: ${error.message}`, true);
-                    unsetLoading(targetElement); // Remove loading em caso de erro
+                    unsetLoading(targetElement); // Remove loading só no erro
                 }
-                // Não precisa de unsetLoading no sucesso porque a tabela será redesenhada
             }
         });
     }
@@ -561,7 +561,7 @@ export function initRecordsModule() {
             if (!button || button.disabled) return;
             const pageToGo = parseInt(button.dataset.page, 10);
             if (pageToGo !== state.mainTable.currentPage) {
-                 fetchRecordsPage(pageToGo); // Busca e renderiza a nova página
+                 fetchRecordsPage(pageToGo);
             }
         });
     }
@@ -661,7 +661,8 @@ export function initRecordsModule() {
                      const content = generatePrintableTermHTML(formDataForPrint);
                      printContent(content);
                  } finally {
-                    setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
+                     // Reseta flag APÓS printContent ter sido chamado
+                     setTimeout(() => { isPrinting = false; }, 500);
                  }
             }
         });
