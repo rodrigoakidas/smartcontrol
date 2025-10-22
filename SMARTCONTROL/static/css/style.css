@@ -1,133 +1,204 @@
 /* SMARTCONTROL/static/css/style.css */
-/* (VERSÃO CORRIGIDA E COMPACTADA) */
+/* (VERSÃO FINAL COM ESTILOS DE IMPRESSÃO DETALHADOS) */
 
-body { 
-    font-family: 'Inter', sans-serif; 
-    background-color: #f3f4f6; 
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
 }
 
-.modal { 
-    transition: opacity 0.3s ease; 
+.modal {
+    transition: opacity 0.3s ease;
 }
 
-.modal-content { 
-    transition: transform 0.3s ease; 
+.modal-content {
+    transition: transform 0.3s ease;
 }
 
-.disabled-module { 
-    opacity: 0.5; 
-    cursor: not-allowed; 
-} 
+.disabled-module {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-.disabled-module:hover { 
-    background-color: inherit !important; 
+.disabled-module:hover {
+    background-color: inherit !important;
 }
 
 /* ============================================
-   SEÇÃO DE IMPRESSÃO MELHORADA E DEFINITIVA
+   SEÇÃO DE IMPRESSÃO - ESTILOS DO PDF
    ============================================ */
 @media print {
-    /* 1. Oculta TUDO exceto a área de impressão */
+    /* --- Configurações Gerais da Página --- */
+    @page {
+        size: A4;
+        margin: 10mm; /* Margens compactas */
+    }
+
+    body {
+        background: white !important; /* Fundo branco */
+        font-family: Arial, sans-serif; /* Fonte comum */
+        font-size: 9pt; /* Tamanho base menor */
+        color: #000;
+        line-height: 1.3; /* Espaçamento entre linhas menor */
+    }
+
+    /* Oculta tudo fora da área de impressão */
     body > *:not(#print-section) {
         display: none !important;
     }
-
-    /* 2. Garante visibilidade do conteúdo de impressão */
-    #print-section, 
+    #print-section,
     #print-section * {
         visibility: visible !important;
     }
-
-    /* 3. Correção de layout de impressão */
     #print-section {
         display: block !important;
         width: 100%;
         margin: 0;
         padding: 0;
     }
-    
-    /* 4. Esconde elementos com classe no-print */
-    .no-print {
-        display: none !important;
-    }
+    .no-print { display: none !important; }
 
-    /* 5. Configurações da página (COMPACTADA) */
-    @page {
-        size: A4;
-        /* MARGENS DIMINUÍDAS DE 15mm PARA 10mm */
-        margin: 10mm; 
-    }
-    
-    /* 6. Evita quebras de página indesejadas */
-    table, 
-    img, 
-    h1, 
-    h2, 
-    h3 {
-        page-break-inside: avoid;
-    }
-    
-    /* 7. Força quebra de página antes de elementos com classe page-break */
-    .page-break {
-        page-break-before: always;
-    }
-    
-    /* 8. Otimiza tabelas para impressão */
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    
-    table thead {
-        display: table-header-group;
-    }
-    
-    table tbody tr {
-        page-break-inside: avoid;
-    }
-    
-    /* 9. Melhora contraste para impressão */
+    /* Forçar cores e remover sombras */
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         color-adjust: exact !important;
-    }
-    
-    /* 10. Remove sombras e efeitos desnecessários */
-    * {
         box-shadow: none !important;
         text-shadow: none !important;
     }
-    
-    /* 11. Otimiza imagens */
-    img {
-        max-width: 100% !important;
-        height: auto !important;
+
+    /* Evitar quebras indesejadas */
+    h1, h2, h3, h4, table, img, .signatures {
+        page-break-inside: avoid;
     }
-    
-    /* 12. Garante fundo branco para melhor impressão */
-    body, 
-    #print-section {
-        background: white !important;
+    p { orphans: 3; widows: 3; }
+
+    /* --- Estilos Específicos do Termo --- */
+
+    .print-container {
+        padding: 0; /* Container principal sem padding extra */
     }
-    
-    /* 13. Ajusta links para impressão */
-    a {
-        text-decoration: underline;
-        color: #000 !important;
+
+    /* Cabeçalho */
+    .print-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start; /* Alinha no topo */
+        border-bottom: 1px solid #000;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
     }
-    
-    /* 14. Previne viúvas e órfãs */
-    p, 
-    h2, 
-    h3 {
-        orphans: 3;
-        widows: 3;
+    .company-info {
+        font-size: 8pt;
     }
-    
-    /* 15. Melhora legibilidade de textos pequenos */
-    .text-xs, 
-    .text-sm {
-        font-size: 10pt !important;
+    .company-name {
+        font-weight: bold;
+        font-size: 9pt;
+        margin: 0;
+    }
+    .company-cnpj {
+        margin: 0;
+    }
+    .company-logo {
+        height: 35px !important; /* Altura fixa e pequena */
+        max-width: 120px !important; /* Largura máxima */
+        object-fit: contain;
+    }
+
+    /* Título do Termo */
+    .term-title {
+        font-size: 11pt;
+        font-weight: bold;
+        text-align: center;
+        margin: 10px 0 15px 0;
+        border-bottom: 1.5px solid #000;
+        padding-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    /* Títulos das Seções */
+    .section-title {
+        font-size: 10pt;
+        font-weight: bold;
+        margin: 12px 0 6px 0;
+        border-bottom: 1px solid #333;
+        padding-bottom: 2px;
+    }
+
+    /* Tabelas de Dados */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        font-size: 8.5pt; /* Fonte menor na tabela */
+    }
+    .data-table td {
+        border: 0.5px solid #ccc; /* Bordas finas */
+        padding: 3px 5px; /* Padding reduzido */
+        vertical-align: top;
+    }
+    .data-label {
+        background-color: #f2f2f2 !important; /* Fundo cinza claro para rótulos */
+        font-weight: bold;
+        width: 25%; /* Largura fixa para rótulos */
+    }
+
+    /* Caixa de Declaração */
+    .declaration-box {
+        background-color: #f0f0f0 !important;
+        padding: 8px 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-size: 8pt; /* Fonte menor */
+        line-height: 1.3; /* Linha mais apertada */
+    }
+    .declaration-box p {
+        margin: 0;
+    }
+    .declaration-box strong {
+         font-weight: bold;
+    }
+
+    /* Assinaturas */
+    .signatures {
+        margin-top: 20px; /* Espaço antes das assinaturas reduzido */
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    .signature-block {
+        width: 40%;
+    }
+    .signature-line {
+        border-bottom: 1px solid #000;
+        height: 25px; /* Altura da linha reduzida */
+        margin-bottom: 4px; /* Espaço após a linha reduzido */
+    }
+    .signature-name {
+        font-weight: bold;
+        margin: 0;
+        font-size: 8.5pt;
+    }
+    .signature-role {
+        font-size: 7.5pt;
+        color: #555;
+        margin: 0;
+    }
+
+    /* Seção de Devolução (para espaçamento) */
+    .return-section {
+        padding-top: 10px; /* Espaço antes da seção de devolução */
+    }
+
+    /* Rodapé */
+    .footer-print {
+        margin-top: 15px; /* Espaço antes do rodapé reduzido */
+        padding-top: 5px;
+        border-top: 0.5px solid #ccc;
+        text-align: center;
+        font-size: 7pt; /* Fonte bem pequena */
+        color: #666;
+    }
+    .footer-print p {
+        margin: 0;
     }
 }
