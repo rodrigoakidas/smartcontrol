@@ -155,8 +155,16 @@ export function renderMainTable() {
         // Preenche a tabela com os dados
         state.records.forEach(r => {
             const status = getStatusBadge(r.status);
-            // Formata data corretamente para exibição
-            const deliveryDateFormatted = r.deliveryDate ? new Date(r.deliveryDate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Data Inválida';
+            
+            // --- CORREÇÃO APLICADA AQUI ---
+            // Trocamos 'new Date(r.deliveryDate + 'T00:00:00')'
+            // por 'new Date(r.deliveryDate.replace(/-/g, '/'))'
+            // para evitar problemas de fuso horário e datas inválidas.
+            const deliveryDateFormatted = r.deliveryDate 
+                ? new Date(r.deliveryDate.replace(/-/g, '/')).toLocaleDateString('pt-BR') 
+                : 'Data Inválida';
+            // --- FIM DA CORREÇÃO ---
+
             recordsTableBody.innerHTML += `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="p-4">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
@@ -826,3 +834,4 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
