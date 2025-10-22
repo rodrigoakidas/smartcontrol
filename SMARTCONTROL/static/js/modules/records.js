@@ -1,5 +1,5 @@
 // SMARTCONTROL/static/js/modules/records.js
-// (VERSÃO COMPLETA E CORRIGIDA - Inclui Ícones de Anexo, Flag isPrinting e fetchAllData após submit/delete)
+// (VERSÃO CORRIGIDA - Força refresh no Novo Termo e remove comentário)
 
 import { state, fetchAllData, updateState } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput, setLoading, unsetLoading } from './ui.js';
@@ -178,13 +178,15 @@ export function renderMainTable() {
             // Cria e adiciona a linha
             const row = document.createElement('tr');
             row.className = 'border-b hover:bg-gray-50';
+            // --- CORREÇÃO DO COMENTÁRIO VISUAL ---
             row.innerHTML = `
                 <td class="p-3 align-top">${r.employeeName || 'N/A'}<br><span class="text-xs text-gray-500">ID: ${r.employeeMatricula || 'N/A'}</span></td>
                 <td class="p-3 align-top">${r.deviceModel || 'N/A'} (IMEI: ${r.deviceImei || 'N/A'})<br><span class="text-xs text-gray-500">Linha: ${r.deviceLine || 'N/A'}</span></td>
                 <td class="p-3 align-top">${deliveryDateFormatted}</td>
                 <td class="p-3 align-top"><span class="px-2 py-1 text-xs font-medium rounded-full ${status.class}">${status.text}</span></td>
                 <td class="p-3 no-print align-top">
-                    <div class="flex justify-center items-center gap-1 flex-wrap"> {/* flex-wrap adicionado */}
+                    {/* O comentário foi removido daqui */}
+                    <div class="flex justify-center items-center gap-1 flex-wrap">
                         <button data-action="view-record" data-id="${r.id}" class="text-gray-600 p-1 hover:text-gray-800" title="Ver/Editar"><i data-lucide="file-pen-line" class="w-4 h-4"></i></button>
                         ${attachmentButtons}
                         <button data-action="print-record" data-id="${r.id}" class="text-slate-600 p-1 hover:text-slate-800" title="Imprimir"><i data-lucide="printer" class="w-4 h-4"></i></button>
@@ -192,6 +194,7 @@ export function renderMainTable() {
                     </div>
                 </td>
             `;
+            // --- FIM DA CORREÇÃO ---
             recordsTableBody.appendChild(row);
         });
     }
@@ -209,12 +212,27 @@ export function renderMainTable() {
 
 // Abre o formulário de registo
 async function openRecordForm(recordId = null) {
+    // --- CORREÇÃO DO ESTADO OBSOLETO ---
+    // Se for um NOVO termo, força a atualização de TODOS os dados ANTES de popular
+    if (!recordId) {
+        showToast("A carregar dados atualizados..."); // Feedback para o user
+        try {
+            await fetchAllData(); // Garante que state.employees e state.devices estão frescos
+            showToast("Pronto para criar novo termo.");
+        } catch (error) {
+            showToast("Erro ao carregar dados atualizados. Tente novamente.", true);
+            return; // Impede abrir o modal se os dados falharam
+        }
+    }
+    // --- FIM DA CORREÇÃO ---
+
     const form = document.getElementById('record-form');
     const modal = document.getElementById('record-modal');
     if (!form || !modal) return;
     form.reset();
     document.getElementById('record-id').value = recordId || '';
 
+    // ... (resto do código da openRecordForm para popular campos, inalterado) ...
     const employeeSelect = document.getElementById('employeeSelect');
     const deviceSelect = document.getElementById('deviceSelect');
     const viewDeliveryTermBtn = document.getElementById('viewDeliveryTermBtn');
@@ -252,12 +270,14 @@ async function openRecordForm(recordId = null) {
         document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = false); // Habilita TODOS, incluindo file inputs
 
         try {
+            // Busca dados frescos especificamente para este ID (redundante se fetchAllData já rodou, mas seguro)
             const data = await fetchItemById('records', recordId);
             if (!data) { closeModal(modal); showToast("Termo não encontrado.", true); return; }
 
             // Preenche dados entrega (view only)
             const employeeData = state.employees.find(e => e.id === data.employeeMatricula); // Usa matricula
             employeeSelect.innerHTML = `<option value="${data.employeeMatricula}" selected>${employeeData ? `${employeeData.name} (${employeeData.id})` : `Matrícula: ${data.employeeMatricula}`}</option>`;
+            // Mostra o aparelho associado, mesmo que não esteja mais disponível (para contexto histórico)
             deviceSelect.innerHTML = `<option value="${data.deviceImei}" selected>${data.deviceModel || 'Modelo Desconhecido'} (${data.deviceImei})</option>`;
             document.getElementById('deviceLineDisplay').value = data.deviceLine || 'Nenhuma';
             document.getElementById('deliveryDate').value = formatDateForInput(data.data_entrega);
@@ -305,17 +325,21 @@ async function openRecordForm(recordId = null) {
         document.getElementById('return-fieldset').classList.add('hidden');
         document.getElementById('return-fieldset').querySelectorAll('select, input, textarea').forEach(el => el.disabled = true);
 
+        // Popula dropdowns com dados JÁ ATUALIZADOS pelo fetchAllData no início da função
         employeeSelect.innerHTML = '<option value="">Selecione...</option>';
         state.employees.forEach(e => employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`);
 
         deviceSelect.innerHTML = '<option value="">Selecione...</option>';
-        state.devices.filter(d => d.status === 'Disponível').forEach(d => {
-            deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
-        });
-        if (deviceSelect.options.length <= 1) { // Apenas a opção "Selecione..."
-            deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
+        const availableDevices = state.devices.filter(d => d.status === 'Disponível'); // Filtra usando o status atualizado
+        if (availableDevices.length > 0) {
+            availableDevices.forEach(d => {
+                deviceSelect.innerHTML += `<option value="${d.imei1}">${d.model} (${d.imei1})</option>`;
+            });
+        } else {
+             deviceSelect.innerHTML = '<option value="">Nenhum aparelho disponível</option>';
         }
 
+        // Preenche defaults
         document.getElementById('deliveryDate').value = formatDateForInput(new Date());
         document.getElementById('deliveryCondition').value = 'Novo';
         document.getElementById('deviceLineDisplay').value = '';
@@ -328,8 +352,8 @@ async function openRecordForm(recordId = null) {
 
 // Gera HTML para impressão (ULTRA COMPACTA COM CLASSES)
 function generatePrintableTermHTML(data) {
-    // ... (código da função ultra compacta inalterado) ...
-     const accessories = data.acessorios || data.accessories || [];
+    // ... (código da função ultra compacta INALTERADO) ...
+    const accessories = data.acessorios || data.accessories || [];
     const accessoriesList = accessories.length > 0 ? accessories.join(', ') : 'Nenhum';
     const deliveryDateStr = data.data_entrega || data.deliveryDate;
     const deliveryDate = deliveryDateStr ? new Date(deliveryDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR') : 'Data Inválida';
@@ -340,12 +364,9 @@ function generatePrintableTermHTML(data) {
     if (returnDateStr) {
         const returnDate = new Date(returnDateStr.replace(/-/g, '/')).toLocaleDateString('pt-BR');
         const receiverName = data.return_checker || state.currentUser?.nome || 'N/A';
-
         returnSectionHTML = `
             <div style="padding-top: 10px;">
-                <h3 style="font-size:12px; font-weight:700; margin: 10px 0 5px 0; border-bottom:1px solid #333; padding-bottom:3px;">
-                    4. TERMO DE DEVOLUÇÃO
-                </h3>
+                <h3 style="font-size:12px; font-weight:700; margin: 10px 0 5px 0; border-bottom:1px solid #333; padding-bottom:3px;">4. TERMO DE DEVOLUÇÃO</h3>
                 <table style="width:100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9px;">
                      <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Devolução:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${returnDate}</td> </tr>
                      <tr> <td style="padding:3px 4px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td> <td style="padding:3px 4px; border:1px solid #ddd;">${data.condicao_devolucao || 'N/A'}</td> </tr>
@@ -359,7 +380,6 @@ function generatePrintableTermHTML(data) {
                 </div>
             </div>`;
     }
-
     return `
         <div class="print-container">
             ${getReportHeader()}
@@ -488,34 +508,35 @@ export function initRecordsModule() {
     const recordsTableBody = document.getElementById('records-table-body');
     if (recordsTableBody) {
         recordsTableBody.addEventListener('click', async (e) => {
-            // Target pode ser o botão ou o ícone dentro dele
-            const button = e.target.closest('button[data-action], a'); // 'a' para links de anexo
+            // Target pode ser o botão ou o ícone dentro dele, ou o link 'a'
+            const targetElement = e.target.closest('button[data-action], a[href]');
 
-            if (!button) return;
+            if (!targetElement) return; // Sai se não clicou em nada interativo
 
-            // Previne ação padrão SE FOR UM LINK (para não navegar)
-            // mas permite se for botão (caso haja algum comportamento padrão futuro)
-            if (button.tagName === 'A' && button.hasAttribute('href')) {
-               // Deixa o link funcionar normalmente (abrir em nova aba)
-            } else {
-                 e.preventDefault(); // Previne ação padrão para BOTÕES
-                 const id = button.dataset.id;
-                 const action = button.dataset.action;
+            // Se for um link de anexo, deixa o navegador abrir
+            if (targetElement.tagName === 'A' && targetElement.hasAttribute('href') && targetElement.target === '_blank') {
+                return;
+            }
 
-                 if (action === 'view-record') {
-                     openRecordForm(id);
-                 } else if (action === 'print-record') {
-                     printSingleRecord(id);
-                 } else if (action === 'delete-record') {
-                     if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
-                     try {
-                         const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
-                         const result = await res.json();
-                         if (!res.ok) throw new Error(result.message);
-                         showToast("Registo apagado.");
-                         await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
-                     } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
-                 }
+            // Se chegou aqui, é um BOTÃO ou um link que não deveria navegar
+            e.preventDefault(); // Previne ação padrão para botões e links não-anexo
+
+            const id = targetElement.dataset.id;
+            const action = targetElement.dataset.action;
+
+            if (action === 'view-record') {
+                openRecordForm(id);
+            } else if (action === 'print-record') {
+                printSingleRecord(id);
+            } else if (action === 'delete-record') {
+                if (!confirm('Tem a certeza que deseja excluir este termo?')) return;
+                try {
+                    const res = await fetch(`${API_URL}/api/records/${id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser: state.currentUser }) });
+                    const result = await res.json();
+                    if (!res.ok) throw new Error(result.message);
+                    showToast("Registo apagado.");
+                    await fetchAllData(); // Recarrega TUDO (termos, aparelhos, etc.)
+                } catch (error) { showToast(`Erro ao excluir: ${error.message}`, true); }
             }
         });
     }
@@ -626,12 +647,13 @@ export function initRecordsModule() {
                      const deviceSelect = document.getElementById('deviceSelect');
                      const selectedEmployee = state.employees.find(emp => emp.id === employeeSelect.value); // Usa matricula
                      const selectedDevice = state.devices.find(d => d.imei1 === deviceSelect.value);
-                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); return; } // Validação
+                     if (!selectedEmployee || !selectedDevice) { showToast("Selecione Funcionário e Aparelho para imprimir.", true); isPrinting = false; return; } // Validação e reseta flag
                      const formDataForPrint = { id: 'Novo', employeeName: selectedEmployee.name, employeeMatricula: selectedEmployee.id, employeePosition: selectedEmployee.position, deviceModel: selectedDevice.model, deviceImei: selectedDevice.imei1, deviceLine: document.getElementById('deviceLineDisplay').value || 'N/A', deliveryDate: document.getElementById('deliveryDate').value, deliveryCondition: document.getElementById('deliveryCondition').value, deliveryNotes: document.getElementById('deliveryNotes').value, accessories: Array.from(document.querySelectorAll('input[name="accessories"]:checked')).map(cb => cb.value), delivery_checker: state.currentUser?.nome || 'N/A', data_devolucao: null, condicao_devolucao: null, notas_devolucao: null, return_checker: null };
                      const content = generatePrintableTermHTML(formDataForPrint);
-                     printContent(content);
+                     printContent(content); // Chama window.print()
                  } finally {
-                     setTimeout(() => { isPrinting = false; }, 500); // Reseta flag
+                     // Reseta flag APÓS printContent (que chama window.print bloqueante)
+                     setTimeout(() => { isPrinting = false; }, 500);
                  }
             }
         });
