@@ -494,110 +494,7 @@ function generatePrintableTermHTML(data) {
         </div>`; // ESTE ` fecha o return CORRETO da função
 } // ESTA é a chave que fecha a função generatePrintableTermHTML
     // --- MUDANÇAS DE COMPACTAÇÃO AQUI ---
-    return `
-        <div style="padding:15px; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:11px; color:#000; max-width:800px; margin:0 auto;">
-            ${getReportHeader()}
-            
-            <h1 style="font-size:18px; font-weight:700; text-align:center; margin: 20px 0 24px 0; text-transform:uppercase; border-bottom:3px solid #333; padding-bottom:10px;">
-                Termo de Responsabilidade Nº ${data.id && data.id !== 'Novo' ? String(data.id).padStart(5, '0') : '_____'}
-            </h1>
-            
-            <h3 style="font-size:14px; font-weight:700; margin: 20px 0 12px 0; border-bottom:2px solid #333; padding-bottom:6px;">
-                1. DADOS DO FUNCIONÁRIO
-            </h3>
-            
-            <table style="width:100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Nome Completo:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.employeeName || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Matrícula:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.employeeMatricula || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Cargo:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.employeePosition || 'N/A'}</td>
-                </tr>
-            </table>
-            
-            <h3 style="font-size:14px; font-weight:700; margin: 20px 0 12px 0; border-bottom:2px solid #333; padding-bottom:6px;">
-                2. DADOS DO EQUIPAMENTO
-            </h3>
-            
-            <table style="width:100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Modelo:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.deviceModel || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">IMEI Principal:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.deviceImei || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Linha Telefónica:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.deviceLine || 'Sem linha vinculada'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Acessórios Inclusos:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${accessoriesList}</td>
-                </tr>
-            </table>
-            
-            <h3 style="font-size:14px; font-weight:700; margin: 20px 0 12px 0; border-bottom:2px solid #333; padding-bottom:6px;">
-                3. TERMO DE ENTREGA
-            </h3>
-            
-            <table style="width:100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px;">
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; width:30%; font-weight:600;">Data de Entrega:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${deliveryDate}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Condição:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.condicao_entrega || data.deliveryCondition || 'N/A'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Observações:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${data.notas_entrega || data.deliveryNotes || 'Nenhuma observação'}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px; border:1px solid #ddd; background:#f9f9f9; font-weight:600;">Entregue por:</td>
-                    <td style="padding:6px; border:1px solid #ddd;">${delivererName}</td>
-                </tr>
-            </table>
-            
-            <div style="background:#f0f0f0; padding:12px; border-radius:8px; margin:20px 0;">
-                <p style="font-size:10px; line-height:1.5; margin:0;">
-                    <strong>Declaração do Funcionário:</strong><br>
-                    Declaro que recebi o equipamento e acessórios acima descritos em perfeitas condições, 
-                    responsabilizando-me por sua guarda, conservação e uso adequado durante o período em que 
-                    estiver sob minha posse. Comprometo-me a devolver o equipamento nas mesmas condições de uso, 
-                    ressalvado o desgaste natural. Em caso de perda, roubo ou dano intencional, assumo a 
-                    responsabilidade pelos prejuízos causados.
-                </p>
-            </div>
-            
-            <div style="margin-top:40px; display:flex; justify-content:space-around; text-align:center;">
-                <div style="width:40%;">
-                    <div style="border-bottom:2px solid #000; height:40px; margin-bottom:8px;"></div>
-                    <p style="font-weight:600; margin:0; font-size:11px;">${data.employeeName || 'N/A'}</p>
-                    <p style="font-size:9px; color:#666; margin:0;">Assinatura do Funcionário</p>
-                </div>
-                <div style="width:40%;">
-                    <div style="border-bottom:2px solid #000; height:40px; margin-bottom:8px;"></div>
-                    <p style="font-weight:600; margin:0; font-size:11px;">${delivererName}</p>
-                    <p style="font-size:9px; color:#666; margin:0;">Assinatura do Responsável</p>
-                </div>
-            </div>
-            
-            ${returnSectionHTML}
-            
-            <div style="margin-top:40px; padding-top:12px; border-top:1px solid #ccc; text-align:center; font-size:9px; color:#666;">
-                <p style="margin:0;">Documento gerado eletronicamente em ${new Date().toLocaleString('pt-BR')}</p>
-            </div>
-        </div>`;
-}
+    
 
 
 // Função auxiliar para imprimir - Aceita ID numérico ou objeto de dados completo
@@ -932,6 +829,7 @@ export function initRecordsModule() {
 
 
 } // Fim de initRecordsModule
+
 
 
 
