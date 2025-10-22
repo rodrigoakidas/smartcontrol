@@ -1,3 +1,6 @@
+/* SMARTCONTROL/static/css/style.css */
+/* (VERSÃO CORRIGIDA E COMPACTADA) */
+
 body { 
     font-family: 'Inter', sans-serif; 
     background-color: #f3f4f6; 
@@ -35,12 +38,9 @@ body {
         visibility: visible !important;
     }
 
-    /* 3. Posiciona para ocupar toda a página */
+    /* 3. Correção de layout de impressão */
     #print-section {
         display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
         width: 100%;
         margin: 0;
         padding: 0;
@@ -51,10 +51,11 @@ body {
         display: none !important;
     }
 
-    /* 5. Configurações da página */
+    /* 5. Configurações da página (COMPACTADA) */
     @page {
         size: A4;
-        margin: 15mm;
+        /* MARGENS DIMINUÍDAS DE 15mm PARA 10mm */
+        margin: 10mm; 
     }
     
     /* 6. Evita quebras de página indesejadas */
