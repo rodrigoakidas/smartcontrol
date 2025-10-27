@@ -15,9 +15,6 @@ employees_bp = Blueprint('employees', __name__)
 @employees_bp.route('/', methods=['GET'])
 def get_employees():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         g.db_cursor.execute("SELECT matricula as id, nome as name, cargo as position, email FROM funcionarios")
         employees = g.db_cursor.fetchall()
         return jsonify(employees)
@@ -43,9 +40,6 @@ def add_employee():
 
         if not all([matricula, nome, cargo]):
             return jsonify({'message': 'Matrícula, nome e cargo são obrigatórios'}), 400
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute(
             "INSERT INTO funcionarios (matricula, nome, cargo, email) VALUES (%s, %s, %s, %s)",
@@ -85,9 +79,6 @@ def update_employee(matricula):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute(
             "UPDATE funcionarios SET nome = %s, cargo = %s, email = %s WHERE matricula = %s",
             (nome, cargo, email, matricula)
@@ -123,9 +114,6 @@ def delete_employee(matricula):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute("SELECT nome FROM funcionarios WHERE matricula = %s", (matricula,))
         employee_data = g.db_cursor.fetchone()
 
@@ -157,9 +145,6 @@ def delete_employee(matricula):
 @employees_bp.route('/<string:matricula>/history', methods=['GET'])
 def get_employee_history(matricula):
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT 
                 a.modelo AS deviceModel,
@@ -198,9 +183,6 @@ def import_employees():
     username = current_user.get('nome', 'Sistema')
 
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-        
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_reader = csv.reader(stream)
         

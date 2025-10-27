@@ -20,9 +20,6 @@ def login():
             return jsonify({'message': 'Usuário e senha são obrigatórios'}), 400
 
         # 'g.db_cursor' já está disponível graças ao app.py
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         # --- CORREÇÃO DE SEGURANÇA ---
         # 1. Selecione APENAS os campos necessários. NÃO use 'SELECT *'.
         g.db_cursor.execute(
@@ -48,6 +45,8 @@ def login():
         except Exception:
             # Fallback para senhas antigas em texto plano (se houver)
             senha_ok = (senha == senha_hash)
+            if senha_ok:
+                current_app.logger.warning(f"Utilizador '{username}' fez login com senha em texto plano. Recomenda-se atualizar a senha.")
 
         if not senha_ok:
             return jsonify({'message': 'Senha incorreta'}), 401

@@ -14,9 +14,6 @@ def get_records():
         offset = (page - 1) * limit
         status_filter = request.args.get('filter', 'Todos')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-        
         count_sql = "SELECT COUNT(*) as total FROM registros"
         params = []
         if status_filter != 'Todos':
@@ -59,9 +56,6 @@ def get_records():
 def get_record_by_id(record_id):
     """Busca um registo único por ID. Não precisa de permissão especial."""
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT r.*, f.matricula AS employeeMatricula, a.imei1 AS deviceImei,
                    a.modelo AS deviceModel, li.numero AS deviceLine
@@ -124,9 +118,6 @@ def update_record(record_id):
         sql = f"UPDATE registros SET {', '.join(update_fields)} WHERE id = %s"
         params.append(record_id)
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute(sql, tuple(params))
 
         if g.db_cursor.rowcount == 0:
@@ -166,9 +157,6 @@ def create_record():
 
         if not all([matricula, imei, data_entrega]):
             return jsonify({'message': 'Funcionário, aparelho e data de entrega são obrigatórios'}), 400
-            
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute("SELECT id, modelo FROM aparelhos WHERE imei1 = %s", (imei,))
         aparelho = g.db_cursor.fetchone()
@@ -228,9 +216,6 @@ def delete_record(record_id):
         current_user = data.get('currentUser', {})
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute("DELETE FROM registros WHERE id = %s", (record_id,))
         g.db_conn.commit()

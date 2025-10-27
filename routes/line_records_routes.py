@@ -23,9 +23,6 @@ def create_line_record():
         if not all([linha_id, matricula_funcionario, data_entrega]):
             return jsonify({'message': 'Todos os campos são obrigatórios'}), 400
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-        
         g.db_cursor.execute("SELECT id FROM funcionarios WHERE matricula = %s", (matricula_funcionario,))
         funcionario = g.db_cursor.fetchone()
         if not funcionario:

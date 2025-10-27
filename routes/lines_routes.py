@@ -15,9 +15,6 @@ lines_bp = Blueprint('lines', __name__)
 @lines_bp.route('/', methods=['GET'])
 def get_lines():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT 
                 l.id, l.numero, l.operadora, l.plano, l.status,
@@ -50,9 +47,6 @@ def add_line():
 
         if not all([numero, operadora, status]):
             return jsonify({'message': 'Número, operadora e status são obrigatórios'}), 400
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute(
             "INSERT INTO linhas (numero, operadora, plano, status) VALUES (%s, %s, %s, %s)",
@@ -92,9 +86,6 @@ def update_line(line_id):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute(
             "UPDATE linhas SET operadora = %s, plano = %s, status = %s WHERE id = %s",
             (operadora, plano, status, line_id)
@@ -130,9 +121,6 @@ def delete_line(line_id):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute("SELECT numero FROM linhas WHERE id = %s", (line_id,))
         line_data = g.db_cursor.fetchone()
 
@@ -164,9 +152,6 @@ def delete_line(line_id):
 @lines_bp.route('/<int:line_id>/history', methods=['GET'])
 def get_line_history(line_id):
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         g.db_cursor.execute("SELECT * FROM linha_historico WHERE linha_id = %s ORDER BY data_vinculacao DESC", (line_id,))
         history = g.db_cursor.fetchall()
         return jsonify(history)
@@ -193,9 +178,6 @@ def import_lines():
     username = current_user.get('nome', 'Sistema')
 
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-        
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_reader = csv.reader(stream)
         

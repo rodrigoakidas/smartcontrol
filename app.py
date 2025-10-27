@@ -1,7 +1,7 @@
 # SMARTCONTROL/app.py
 # (FICHEIRO COMPLETO E CORRIGIDO)
 
-from flask import Flask, render_template, jsonify, g
+from flask import Flask, render_template, jsonify, g, request, abort
 from flask_cors import CORS # Importe o CORS
 from config.database import get_connection # Importe o get_connection
 from routes import all_blueprints
@@ -60,13 +60,18 @@ def create_app():
     @app.before_request
     def db_connect():
         """Abre uma conexão DB antes de cada requisição."""
-        if not hasattr(g, 'db_conn') or g.db_conn.is_connected() == False:
-            g.db_conn = get_connection()
-            if g.db_conn:
+        # Ignora rotas estáticas e de health check
+        if 'db_conn' not in g and request.endpoint not in ('static', 'health_check'):
+            try:
+                g.db_conn = get_connection()
                 g.db_cursor = g.db_conn.cursor(dictionary=True)
-            else:
-                app.logger.error("Falha ao obter conexão com a base de dados.")
+            except Exception as e:
+                app.logger.error(f"Falha CRÍTICA ao obter conexão com a base de dados: {e}", exc_info=True)
+                # Define como None para o teardown não falhar
+                g.db_conn = None
                 g.db_cursor = None
+                # Aborta a requisição com um erro 503, impedindo a rota de ser executada.
+                abort(503, description="Serviço indisponível: não foi possível conectar à base de dados.")
 
     @app.teardown_request
     def db_disconnect(exception=None):
@@ -99,17 +104,22 @@ def create_app():
     @app.route('/health')
     def health_check():
         """Rota de 'health check' para produção."""
+        conn = None
+        cursor = None
         try:
-            if g.db_cursor:
-                g.db_cursor.execute("SELECT 1")
-                g.db_cursor.fetchone()
-                db_status = "OK"
-            else:
-                db_status = "Connection Failed"
+            # Esta rota deve ter sua própria conexão para não interferir com 'g'
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            db_status = "OK"
             return jsonify(status="OK", database=db_status), 200
         except Exception as e:
             app.logger.error(f"Health check falhou: {e}", exc_info=True)
-            return jsonify(status="Error", database="Error"), 500
+            return jsonify(status="Error", database="Failed"), 503
+        finally:
+            if cursor: cursor.close()
+            if conn and conn.is_connected(): conn.close()
 
     return app
 

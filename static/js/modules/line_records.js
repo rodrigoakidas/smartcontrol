@@ -132,7 +132,7 @@ window.openLineTermForm = (lineId, lineNumber) => {
     const employeeSelect = document.getElementById('line-term-employee-select');
     employeeSelect.innerHTML = '<option value="">Selecione...</option>';
     state.employees.forEach(e => {
-        employeeSelect.innerHTML += `<option value="${e.id}">${e.name} (${e.id})</option>`;
+        employeeSelect.innerHTML += `<option value="${e.matricula}">${e.name} (${e.matricula})</option>`;
     });
 
     openModal(modal);

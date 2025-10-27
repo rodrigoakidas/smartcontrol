@@ -17,9 +17,6 @@ def hash_password(senha):
 def get_users():
     """Lista todos os utilizadores. Agora sem proteção para leitura."""
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         g.db_cursor.execute("SELECT id, nome, username, role, permissoes FROM usuarios")
         users = []
         for user in g.db_cursor.fetchall():
@@ -53,9 +50,6 @@ def create_user():
 
         hashed_password = hash_password(senha)
         permissoes_json = json.dumps(permissoes)
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute(
             "INSERT INTO usuarios (nome, username, senha, role, permissoes) VALUES (%s, %s, %s, %s, %s)",
@@ -94,9 +88,6 @@ def update_user(user_id_to_update):
         
         permissoes_json = json.dumps(permissoes)
         
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         if senha:
             hashed_password = hash_password(senha)
             g.db_cursor.execute(
@@ -137,9 +128,6 @@ def delete_user(user_id_to_delete):
         current_user = data.get('currentUser', {})
         user_id_actor = current_user.get('id')
         username_actor = current_user.get('nome', 'Sistema')
-        
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
         
         if user_id_to_delete == 1:
             return jsonify({'message': 'Não é possível excluir o administrador principal'}), 403

@@ -11,9 +11,6 @@ maintenance_bp = Blueprint('maintenance', __name__)
 @maintenance_bp.route('/', methods=['GET'])
 def get_maintenances():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT 
                 m.id, m.numero_os, m.aparelho_id,
@@ -34,9 +31,6 @@ def get_maintenances():
 @maintenance_bp.route('/<int:maint_id>', methods=['GET'])
 def get_maintenance(maint_id):
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         g.db_cursor.execute(
             "SELECT * FROM manutencoes WHERE id = %s", (maint_id,)
         )
@@ -61,9 +55,6 @@ def create_maintenance():
 
         if not all([aparelho_id, data_envio, defeito_reportado]):
             return jsonify({"message": "Aparelho, data de envio e defeito são obrigatórios"}), 400
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         current_year = datetime.now().year
         g.db_cursor.execute(
@@ -114,9 +105,6 @@ def update_maintenance(maint_id):
         post_condition = data.get('postCondition')
         current_user = data.get('currentUser', {})
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         updates = []
         params = []
         if data_retorno is not None:
@@ -166,9 +154,6 @@ def delete_maintenance(maint_id):
     try:
         data = request.get_json() or {}
         current_user = data.get('currentUser', {})
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute("SELECT aparelho_id FROM manutencoes WHERE id = %s", (maint_id,))
         rec = g.db_cursor.fetchone()

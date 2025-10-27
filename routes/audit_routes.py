@@ -12,9 +12,6 @@ def get_audit_logs(resource, resource_id):
     Busca o histórico de alterações para um recurso específico.
     """
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT id, timestamp, username, action_type, details 
             FROM auditoria 

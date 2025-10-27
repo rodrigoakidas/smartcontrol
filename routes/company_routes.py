@@ -10,9 +10,6 @@ company_bp = Blueprint('company', __name__)
 @company_bp.route('/', methods=['GET'])
 def get_company():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         g.db_cursor.execute("SELECT nome, cnpj, logo FROM empresa WHERE id = 1")
         company_data = g.db_cursor.fetchone()
 
@@ -35,9 +32,6 @@ def update_company():
         nome = data.get('nome')
         cnpj = data.get('cnpj')
         logo_base64 = data.get('logo') # String base64 com cabeçalho
-
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute("SELECT id FROM empresa WHERE id = 1")
         record_exists = g.db_cursor.fetchone()

@@ -13,9 +13,6 @@ devices_bp = Blueprint('devices', __name__)
 @devices_bp.route('/', methods=['GET'])
 def get_devices():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT 
                 a.id, a.modelo AS model, a.imei1, a.imei2, 
@@ -53,9 +50,6 @@ def add_device():
 
         if not all([modelo, imei1, condicao]):
             return jsonify({'message': 'Modelo, IMEI1 e Condição são obrigatórios'}), 400
-            
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
         g.db_cursor.execute(
             "INSERT INTO aparelhos (modelo, imei1, imei2, condicao, observacoes, linha_id) VALUES (%s, %s, %s, %s, %s, %s)",
@@ -90,9 +84,6 @@ def update_device(imei):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei,))
         old_data = g.db_cursor.fetchone()
 
@@ -125,9 +116,6 @@ def delete_device(imei):
         user_id = current_user.get('id')
         username = current_user.get('nome', 'Sistema')
 
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-
         g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei,))
         device_data = g.db_cursor.fetchone()
 
@@ -153,9 +141,6 @@ def delete_device(imei):
 @devices_bp.route('/<string:imei>/history', methods=['GET'])
 def get_device_history(imei):
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql_utilizacao = """
             SELECT 
                 f.nome as employeeName, r.data_entrega as deliveryDate, r.data_devolucao as returnDate 
@@ -196,9 +181,6 @@ def import_devices():
     username = current_user.get('nome', 'Sistema')
 
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_reader = csv.reader(stream)
         
@@ -256,9 +238,6 @@ def import_devices():
 @devices_bp.route('/eligible-for-maintenance', methods=['GET'])
 def get_eligible_devices():
     try:
-        if not g.db_cursor:
-             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
-             
         sql = """
             SELECT a.id, a.modelo, a.imei1
             FROM aparelhos a
