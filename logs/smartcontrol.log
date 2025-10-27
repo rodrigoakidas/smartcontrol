@@ -1,0 +1,310 @@
+2025-10-16 10:04:06,441 INFO: Registrando blueprint 'devices' com prefixo '/api/devices' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,453 INFO: Registrando blueprint 'lines' com prefixo '/api/lines' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,459 INFO: Registrando blueprint 'maintenance' com prefixo '/api/maintenance' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,464 INFO: Registrando blueprint 'records' com prefixo '/api/records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,467 INFO: Registrando blueprint 'upload' com prefixo '/api/upload' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,468 INFO: Registrando blueprint 'dashboard' com prefixo '/api/dashboard' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,470 INFO: Registrando blueprint 'audit' com prefixo '/api/audit' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:06,472 INFO: Registrando blueprint 'line_records' com prefixo '/api/line_records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-16 10:04:14,453 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-16 10:04:14,454 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 13:39:32,490 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:31]
+2025-10-20 13:39:32,518 INFO: Registrando blueprint 'auth' com prefixo '/api/auth' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,519 INFO: Registrando blueprint 'company' com prefixo '/api/company' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,520 INFO: Registrando blueprint 'users' com prefixo '/api/users' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,523 INFO: Registrando blueprint 'employees' com prefixo '/api/employees' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,527 INFO: Registrando blueprint 'devices' com prefixo '/api/devices' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,533 INFO: Registrando blueprint 'lines' com prefixo '/api/lines' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,537 INFO: Registrando blueprint 'maintenance' com prefixo '/api/maintenance' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,541 INFO: Registrando blueprint 'records' com prefixo '/api/records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,546 INFO: Registrando blueprint 'upload' com prefixo '/api/upload' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,548 INFO: Registrando blueprint 'dashboard' com prefixo '/api/dashboard' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,553 INFO: Registrando blueprint 'audit' com prefixo '/api/audit' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:32,556 INFO: Registrando blueprint 'line_records' com prefixo '/api/line_records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 13:39:44,930 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 13:39:44,930 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 14:00:22,715 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:31]
+2025-10-20 14:00:22,717 INFO: Registrando blueprint 'auth' com prefixo '/api/auth' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,718 INFO: Registrando blueprint 'company' com prefixo '/api/company' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,719 INFO: Registrando blueprint 'users' com prefixo '/api/users' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,722 INFO: Registrando blueprint 'employees' com prefixo '/api/employees' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,727 INFO: Registrando blueprint 'devices' com prefixo '/api/devices' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,732 INFO: Registrando blueprint 'lines' com prefixo '/api/lines' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,736 INFO: Registrando blueprint 'maintenance' com prefixo '/api/maintenance' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,740 INFO: Registrando blueprint 'records' com prefixo '/api/records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,767 INFO: Registrando blueprint 'upload' com prefixo '/api/upload' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,768 INFO: Registrando blueprint 'dashboard' com prefixo '/api/dashboard' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,769 INFO: Registrando blueprint 'audit' com prefixo '/api/audit' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:22,770 INFO: Registrando blueprint 'line_records' com prefixo '/api/line_records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:00:41,999 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 14:00:41,999 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 14:43:34,600 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:31]
+2025-10-20 14:43:34,602 INFO: Registrando blueprint 'auth' com prefixo '/api/auth' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,605 INFO: Registrando blueprint 'company' com prefixo '/api/company' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,607 INFO: Registrando blueprint 'users' com prefixo '/api/users' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,610 INFO: Registrando blueprint 'employees' com prefixo '/api/employees' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,614 INFO: Registrando blueprint 'devices' com prefixo '/api/devices' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,618 INFO: Registrando blueprint 'lines' com prefixo '/api/lines' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,630 INFO: Registrando blueprint 'maintenance' com prefixo '/api/maintenance' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,633 INFO: Registrando blueprint 'records' com prefixo '/api/records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,640 INFO: Registrando blueprint 'upload' com prefixo '/api/upload' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,641 INFO: Registrando blueprint 'dashboard' com prefixo '/api/dashboard' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,642 INFO: Registrando blueprint 'audit' com prefixo '/api/audit' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:34,644 INFO: Registrando blueprint 'line_records' com prefixo '/api/line_records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 14:43:44,602 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 14:43:44,602 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:48]
+2025-10-20 15:52:11,896 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:31]
+2025-10-20 15:52:11,897 INFO: Registrando blueprint 'auth' com prefixo '/api/auth' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,898 INFO: Registrando blueprint 'company' com prefixo '/api/company' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,899 INFO: Registrando blueprint 'users' com prefixo '/api/users' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,902 INFO: Registrando blueprint 'employees' com prefixo '/api/employees' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,906 INFO: Registrando blueprint 'devices' com prefixo '/api/devices' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,911 INFO: Registrando blueprint 'lines' com prefixo '/api/lines' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,915 INFO: Registrando blueprint 'maintenance' com prefixo '/api/maintenance' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,919 INFO: Registrando blueprint 'records' com prefixo '/api/records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,922 INFO: Registrando blueprint 'upload' com prefixo '/api/upload' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,924 INFO: Registrando blueprint 'dashboard' com prefixo '/api/dashboard' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,927 INFO: Registrando blueprint 'audit' com prefixo '/api/audit' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 15:52:11,929 INFO: Registrando blueprint 'line_records' com prefixo '/api/line_records' [in D:\APP\SMARTCONTROL\app.py:49]
+2025-10-20 16:18:55,460 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-20 16:19:07,304 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-20 16:19:07,304 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-20 16:19:45,400 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-20 16:19:45,418 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-20 16:19:50,000 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-20 16:19:50,017 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-20 16:24:07,769 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-20 16:24:07,820 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 16:54:55,583 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-21 16:55:08,223 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-21 17:00:48,197 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-21 17:00:48,198 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-21 17:00:48,812 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:00:48,903 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:01:53,034 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-21 17:01:53,035 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-21 17:01:53,598 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:01:53,663 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:08:44,682 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:08:44,766 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:08:47,260 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:08:47,288 ERROR: Erro no decorador require_permission: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'. [in D:\APP\SMARTCONTROL\routes\decorators.py:64]
+Traceback (most recent call last):
+  File "D:\APP\SMARTCONTROL\routes\decorators.py", line 15, in decorated_function
+    data = request.get_json()
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 604, in get_json
+    return self.on_json_loading_failed(None)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\wrappers.py", line 214, in on_json_loading_failed
+    return super().on_json_loading_failed(e)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\mario.rodrigo\AppData\Local\Programs\Python\Python313\Lib\site-packages\werkzeug\wrappers\request.py", line 647, in on_json_loading_failed
+    raise UnsupportedMediaType(
+    ...<2 lines>...
+    )
+werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not attempt to load JSON data because the request Content-Type was not 'application/json'.
+2025-10-21 17:30:38,601 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-21 17:33:58,535 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-21 17:34:12,673 INFO: SMARTCONTROL startup [in D:\APP\SMARTCONTROL\app.py:55]
+2025-10-21 17:40:32,749 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-21 17:40:32,749 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 10:46:49,749 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 10:46:49,750 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 10:56:29,975 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 10:56:29,975 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 11:03:06,620 INFO: Upload bem-sucedido: SMARTCONTROL.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:03:06,620 INFO: Upload bem-sucedido: SMARTCONTROL.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:03:45,979 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:03:45,979 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:13:57,977 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 11:13:57,977 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 11:20:22,012 INFO: Upload bem-sucedido: SMARTCONTROL.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:20:22,012 INFO: Upload bem-sucedido: SMARTCONTROL.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:21:00,238 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:21:00,245 INFO: Upload bem-sucedido: smart_entrega.pdf [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:25:19,469 INFO: Upload bem-sucedido: document-0375789464-20250817.PDF [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:25:19,469 INFO: Upload bem-sucedido: document-0375789464-20250817.PDF [in D:\APP\SMARTCONTROL\routes\upload_routes.py:48]
+2025-10-22 11:46:07,239 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
+2025-10-22 11:46:07,239 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\SMARTCONTROL\routes\auth_routes.py:62]
