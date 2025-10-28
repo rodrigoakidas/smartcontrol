@@ -32,6 +32,27 @@ export function printContent(htmlContent) {
     }
 }
 
+/**
+ * Renderiza um template HTML substituindo placeholders por dados.
+ * @param {string} templateId O ID do elemento <template> a ser usado.
+ * @param {object} data Um objeto onde as chaves correspondem aos placeholders (sem as chaves duplas).
+ * @returns {string} O HTML renderizado ou uma string vazia se o template não for encontrado.
+ */
+export function renderTemplate(templateId, data) {
+    const template = document.getElementById(templateId);
+    if (!template) {
+        console.error(`Template com ID "${templateId}" não encontrado.`);
+        return '';
+    }
+
+    let html = template.innerHTML;
+    // Substitui todos os placeholders {{key}} pelos valores do objeto de dados
+    for (const key in data) {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        html = html.replace(regex, data[key] || ''); // Usa string vazia se o valor for nulo/undefined
+    }
+    return html;
+}
 // Adicione estas funções melhoradas ao reports.js
 
 // Função base melhorada para gerar relatórios
@@ -272,6 +293,3 @@ export function initReportsModule() {
     if (reportMaintenanceBtn) reportMaintenanceBtn.addEventListener('click', () => generateMaintenanceReport(reportModal));
 
 }
-
-
-

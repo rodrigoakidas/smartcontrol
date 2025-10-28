@@ -1,7 +1,7 @@
 # SMARTCONTROL/routes/dashboard_routes.py
 # (FICHEIRO COMPLETO E CORRIGIDO)
 
-from flask import Blueprint, jsonify, current_app, g
+from flask import Blueprint, jsonify, current_app, g, request
 # Removido get_connection
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -66,3 +66,11 @@ def get_dashboard_stats():
         current_app.logger.error(f"Erro ao buscar estatísticas do dashboard: {e}", exc_info=True)
         return jsonify({'message': 'Erro interno ao buscar estatísticas'}), 500
     # Removido 'finally'
+
+@dashboard_bp.route('/welcome', methods=['GET'])
+def welcome():
+    """
+    Returns a welcome message and logs the request metadata.
+    """
+    current_app.logger.info(f"Request received: {request.method} {request.path}")
+    return jsonify({'message': 'Welcome to the SMARTCONTROL API!'})

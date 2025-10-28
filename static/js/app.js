@@ -1,7 +1,7 @@
 // --- MÓDULO PRINCIPAL DA APLICAÇÃO (APP.JS) ---
 
 import { showToast, closeModal as closeModalFromUI } from './modules/ui.js';
-import { fetchData } from './modules/api.js';
+export { fetchData } from './modules/api.js'; // Re-exporta para outros módulos usarem
 import { initAuthModule } from './modules/auth.js';
 import { initCompanyModule } from './modules/company.js';
 import { initEmployeesModule } from './modules/employees.js';
@@ -10,7 +10,7 @@ import { initLinesModule } from './modules/lines.js';
 import { initUsersModule } from './modules/users.js';
 import { initReportsModule } from './modules/reports.js';
 import { initMaintenanceModule } from './modules/maintenance.js';
-import { initRecordsModule, renderMainTable, fetchRecordsPage } from './modules/records.js';
+import { initRecordsModule } from './modules/records.js';
 import { initDashboard } from './modules/dashboard.js';
 import { initLineRecordsModule } from './modules/line_records.js';
 
@@ -113,9 +113,7 @@ export async function fetchAllData() {
 
         updateState({ employees, devices, lines, users, maintenance, companyInfo: companyInfo || {} });
 
-        await fetchRecordsPage(1);
-
-        displayCompanyInfoOnHeader();
+        displayCompanyInfoOnHeader(); // Atualiza o cabeçalho com os dados da empresa
         showToast("Dados carregados com sucesso!");
 
     } catch (error) {

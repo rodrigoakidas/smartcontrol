@@ -9,45 +9,66 @@ records_bp = Blueprint('records', __name__)
 @records_bp.route('/', methods=['GET'])
 def get_records():
     try:
-        page = int(request.args.get('page', 1))
-        limit = int(request.args.get('limit', 10))
-        offset = (page - 1) * limit
-        status_filter = request.args.get('filter', 'Todos')
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 10, type=int)
+        filter_status = request.args.get('filter', 'Todos', type=str)
+        sort_column = request.args.get('sort_column', 'deliveryDate', type=str)
+        sort_direction = request.args.get('sort_direction', 'desc', type=str)
 
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
         
-        count_sql = "SELECT COUNT(*) as total FROM registros"
+        offset = (page - 1) * limit
+
+        base_sql = """
+            FROM registros r
+            JOIN funcionarios f ON r.funcionario_id = f.id
+            JOIN aparelhos a ON r.aparelho_id = a.id
+            LEFT JOIN linhas l ON a.linha_id = l.id
+        """
+        where_clause = "WHERE 1=1"
         params = []
-        if status_filter != 'Todos':
-            count_sql += " WHERE status = %s"
-            params.append(status_filter)
+        if filter_status != 'Todos':
+            where_clause += " AND r.status = %s"
+            params.append(filter_status)
 
-        g.db_cursor.execute(count_sql, tuple(params))
-        total_records = g.db_cursor.fetchone()['total']
+        sortable_columns = {
+            'employeeName': 'f.nome',
+            'deviceModel': 'a.modelo',
+            'deliveryDate': 'r.data_entrega',
+            'status': 'r.status'
+        }
+        db_sort_column = sortable_columns.get(sort_column, 'r.data_entrega')
+        
+        if sort_direction.lower() not in ['asc', 'desc']:
+            sort_direction = 'desc'
 
-        sql = """
+        sql = f"""
             SELECT
                 r.id, r.data_entrega AS deliveryDate, r.status,
                 r.termo_entrega_url, r.termo_devolucao_url, r.bo_url,
                 f.nome AS employeeName, f.matricula AS employeeMatricula,
                 a.modelo AS deviceModel, a.imei1 AS deviceImei,
-                li.numero AS deviceLine
-            FROM registros r
-            JOIN funcionarios f ON r.funcionario_id = f.id
-            JOIN aparelhos a ON r.aparelho_id = a.id
-            LEFT JOIN linhas li ON a.linha_id = li.id
+                l.numero AS deviceLine
+            {base_sql}
+            {where_clause}
+            ORDER BY {db_sort_column} {sort_direction}
+            LIMIT %s OFFSET %s
         """
-        if status_filter != 'Todos':
-            sql += " WHERE r.status = %s"
-
-        sql += " ORDER BY r.data_entrega DESC LIMIT %s OFFSET %s"
-        params.extend([limit, offset])
-
-        g.db_cursor.execute(sql, tuple(params))
+        
+        final_params = params + [limit, offset]
+        g.db_cursor.execute(sql, tuple(final_params))
         records = g.db_cursor.fetchall()
 
-        return jsonify({'total': total_records, 'records': records})
+        count_sql = f"SELECT COUNT(r.id) as total {base_sql} {where_clause}"
+        g.db_cursor.execute(count_sql, tuple(params))
+        total_records = g.db_cursor.fetchone()['total']
+
+        return jsonify({
+            'total': total_records,
+            'records': records
+        })
+
     except Exception as e:
         current_app.logger.error(f"Erro ao buscar registros: {e}", exc_info=True)
         return jsonify({'message': 'Erro ao buscar registros'}), 500
@@ -64,11 +85,11 @@ def get_record_by_id(record_id):
              
         sql = """
             SELECT r.*, f.matricula AS employeeMatricula, a.imei1 AS deviceImei,
-                   a.modelo AS deviceModel, li.numero AS deviceLine
+                   a.modelo AS deviceModel, l.numero AS deviceLine
             FROM registros r
             JOIN funcionarios f ON r.funcionario_id = f.id
             JOIN aparelhos a ON r.aparelho_id = a.id
-            LEFT JOIN linhas li ON a.linha_id = li.id
+            LEFT JOIN linhas l ON a.linha_id = l.id
             WHERE r.id = %s
         """
         g.db_cursor.execute(sql, (record_id,))

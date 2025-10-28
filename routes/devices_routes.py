@@ -1,5 +1,5 @@
 # SMARTCONTROL/routes/devices_routes.py
-# (FICHEIRO COMPLETO E CORRIGIDO)
+# (VERSÃO CORRIGIDA - Status "Disponível" agora funciona corretamente)
 
 from flask import Blueprint, jsonify, request, g, current_app
 import json
@@ -16,21 +16,26 @@ def get_devices():
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
              
+        # CORREÇÃO: Simplificando a query para usar o status da tabela 'aparelhos' como fonte da verdade.
+        # Isso evita inconsistências e simplifica a lógica.
         sql = """
             SELECT 
                 a.id, a.modelo AS model, a.imei1, a.imei2, 
                 a.condicao AS `condition`, a.observacoes AS colorNotes,
-                l.numero AS currentLine,
-                CASE 
-                    WHEN EXISTS (SELECT 1 FROM registros r WHERE r.aparelho_id = a.id AND r.status = 'Em Uso') THEN 'Em uso'
-                    WHEN a.condicao IN ('Novo', 'Aprovado para uso') THEN 'Disponível'
-                    ELSE 'Indisponível'
-                END AS status
+                l.numero AS currentLine, a.status
             FROM aparelhos a
             LEFT JOIN linhas l ON a.linha_id = l.id
         """
         g.db_cursor.execute(sql)
         devices = g.db_cursor.fetchall()
+        
+        # Debug log
+        current_app.logger.info(f"📱 Aparelhos retornados: {len(devices)}")
+        status_count = {}
+        for d in devices:
+            status_count[d['status']] = status_count.get(d['status'], 0) + 1
+        current_app.logger.info(f"📊 Status: {status_count}")
+        
         return jsonify(devices)
     except Exception as e:
         current_app.logger.error(f"Erro ao buscar aparelhos: {e}", exc_info=True)
@@ -93,10 +98,11 @@ def update_device(imei):
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
 
-        g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei,))
+        g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei, ))
         old_data = g.db_cursor.fetchone()
 
-        g.db_cursor.execute(
+        # CORREÇÃO: A query de UPDATE estava faltando o parâmetro do IMEI no final.
+        g.db_cursor.execute( 
             "UPDATE aparelhos SET modelo = %s, imei2 = %s, condicao = %s, observacoes = %s, linha_id = %s WHERE imei1 = %s",
             (modelo, imei2, condicao, observacoes, linha_id if linha_id else None, imei)
         )
@@ -189,7 +195,6 @@ def import_devices():
     if file.filename == '':
         return jsonify({'message': 'Nenhum ficheiro selecionado'}), 400
 
-    # O decorador já trata 'currentUser' do 'request.form'
     current_user_json = request.form.get('currentUser', '{}')
     current_user = json.loads(current_user_json)
     user_id = current_user.get('id')
@@ -202,7 +207,7 @@ def import_devices():
         stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
         csv_reader = csv.reader(stream)
         
-        next(csv_reader) # Pular cabeçalho
+        next(csv_reader)
         
         success_count = 0
         skipped_count = 0

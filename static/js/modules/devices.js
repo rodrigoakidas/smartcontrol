@@ -1,8 +1,9 @@
 // --- MÓDULO DE APARELHOS (DEVICES.JS) ---
 
-import { state, fetchAllData } from '../app.js';
+import { state, updateState, fetchData } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 import { API_URL } from './api.js';
+import { refreshDashboard } from './dashboard.js';
 
 function getDeviceStatusClass(status) {
     const classes = { 'Em uso': 'bg-blue-100 text-blue-800', 'Disponível': 'bg-green-100 text-green-800', 'Indisponível': 'bg-yellow-100 text-yellow-800' };
@@ -22,10 +23,10 @@ function renderDeviceTable(deviceTableBody, noDevicesMessage, devicesToRender = 
     }
     noDevicesMessage.classList.add('hidden');
     
-    devicesToRender.forEach(device => {
+    const rowsHtml = devicesToRender.map(device => {
         const statusClass = getDeviceStatusClass(device.status);
         const conditionClass = getDeviceConditionClass(device.condition);
-        deviceTableBody.innerHTML += `
+        return `
             <tr class="border-b">
                 <td class="p-3">${device.model}</td>
                 <td class="p-3">${device.imei1}</td>
@@ -38,7 +39,9 @@ function renderDeviceTable(deviceTableBody, noDevicesMessage, devicesToRender = 
                     <button data-action="delete-device" data-imei="${device.imei1}" class="text-red-600 p-2" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </td>
             </tr>`;
-    });
+    }).join('');
+
+    deviceTableBody.innerHTML = rowsHtml;
     if(window.lucide) lucide.createIcons();
 }
 
@@ -192,8 +195,13 @@ export function initDevicesModule() {
                 if (!response.ok) throw new Error(result.message);
                 
                 showToast(result.message);
-                await fetchAllData();
-                renderDeviceTable(deviceTableBody, noDevicesMessage);
+                // Otimização: Recarrega apenas os dados de aparelhos e o dashboard.
+                const updatedDevices = await fetchData('devices');
+                updateState({ devices: updatedDevices });
+                await refreshDashboard();
+
+                // Re-renderiza a tabela com os dados atualizados do state.
+                renderDeviceTable(deviceTableBody, noDevicesMessage, updatedDevices);
                 closeModal(deviceFormModal);
             } catch (error) {
                 showToast(`Erro: ${error.message}`, true);
@@ -222,8 +230,13 @@ export function initDevicesModule() {
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
                     showToast(result.message);
-                    await fetchAllData();
-                    renderDeviceTable(deviceTableBody, noDevicesMessage);
+                    // Otimização: Recarrega apenas os dados de aparelhos e o dashboard.
+                    const updatedDevices = await fetchData('devices');
+                    updateState({ devices: updatedDevices });
+                    await refreshDashboard();
+
+                    // Re-renderiza a tabela com os dados atualizados do state.
+                    renderDeviceTable(deviceTableBody, noDevicesMessage, updatedDevices);
                 } catch (error) {
                     showToast(`Erro: ${error.message}`, true);
                 }

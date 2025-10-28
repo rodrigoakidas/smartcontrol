@@ -88,8 +88,7 @@ function renderDeviceConditionChart(conditions) {
     });
 }
 
-export async function initDashboard() {
-    console.log("📊 Inicializando o Dashboard...");
+export async function refreshDashboard() {
     try {
         const stats = await fetchData('dashboard/stats');
         if (stats) {
@@ -98,6 +97,13 @@ export async function initDashboard() {
             renderDeviceConditionChart(stats.devicesByCondition);
         }
     } catch (error) {
-        console.error("Erro ao carregar dados do dashboard:", error);
+        console.error("Erro ao atualizar dados do dashboard:", error);
     }
+}
+
+export async function initDashboard() {
+    console.log("📊 Inicializando o Dashboard...");
+    // A primeira carga pode ser feita aqui ou delegada para o fetchAllData inicial
+    // Por enquanto, vamos manter a lógica de atualização separada.
+    await refreshDashboard();
 }

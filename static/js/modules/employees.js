@@ -17,11 +17,11 @@ function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToR
     employeesToRender.forEach(employee => {
         employeeTableBody.innerHTML += `
             <tr class="border-b">
-                <td class="p-3">${employee.name}</td>
-                <td class="p-3">${employee.id}</td>
-                <td class="p-3">${employee.position}</td>
+                <td class="p-3">${employee.name || 'N/A'}</td>
+                <td class="p-3">${employee.matricula || 'N/A'}</td>
+                <td class="p-3">${employee.position || 'N/A'}</td>
                 <td class="p-3 text-center space-x-1">
-                    <button data-action="history-employee" data-id="${employee.id}" class="text-blue-600 p-2" title="Histórico de Aparelhos"><i data-lucide="history"></i></button>
+                    <button data-action="history-employee" data-id="${employee.id}" data-matricula="${employee.matricula}" class="text-blue-600 p-2" title="Histórico de Aparelhos"><i data-lucide="history"></i></button>
                     <button data-action="edit-employee" data-id="${employee.id}" class="text-gray-600 p-2" title="Editar"><i data-lucide="edit"></i></button>
                     <button data-action="delete-employee" data-id="${employee.id}" class="text-red-600 p-2" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </td>
@@ -37,12 +37,14 @@ function openEmployeeForm(employeeForm, employeeFormModal, employeeId = null) {
 
     if (employeeId) {
         const employee = state.employees.find(e => e.id === employeeId);
-        document.getElementById('employee-modal-title').textContent = "Editar Funcionário";
-        document.getElementById('employeeFormName').value = employee.name;
-        matriculaInput.value = employee.id;
-        document.getElementById('employeeFormPosition').value = employee.position;
-        document.getElementById('employeeFormEmail').value = employee.email || '';
-        matriculaInput.readOnly = true;
+        if (employee) {
+            document.getElementById('employee-modal-title').textContent = "Editar Funcionário";
+            document.getElementById('employeeFormName').value = employee.name;
+            matriculaInput.value = employee.matricula;
+            document.getElementById('employeeFormPosition').value = employee.position;
+            document.getElementById('employeeFormEmail').value = employee.email || '';
+            matriculaInput.readOnly = true;
+        }
     } else {
         document.getElementById('employee-modal-title').textContent = "Novo Funcionário";
         matriculaInput.readOnly = false;
@@ -50,18 +52,19 @@ function openEmployeeForm(employeeForm, employeeFormModal, employeeId = null) {
     openModal(employeeFormModal);
 }
 
-async function showEmployeeHistory(employeeHistoryModal, matricula) {
-    const employee = state.employees.find(e => e.id === matricula);
+async function showEmployeeHistory(employeeHistoryModal, employeeId, matricula) {
+    const employee = state.employees.find(e => e.id === employeeId);
     if (!employee) return;
 
-    document.getElementById('history-employee-name').textContent = `${employee.name} (Matrícula: ${employee.id})`;
+    // CORREÇÃO 1: Exibir a matrícula correta em vez do ID numérico.
+    document.getElementById('history-employee-name').textContent = `${employee.name} (Matrícula: ${employee.matricula})`;
     const tbody = document.getElementById('employee-history-table-body');
     const noHistoryMessage = document.getElementById('no-history-message');
     tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center">A carregar histórico...</td></tr>';
     openModal(employeeHistoryModal);
 
     try {
-        const response = await fetch(`${API_URL}/api/employees/${matricula}/history`);
+        const response = await fetch(`${API_URL}/api/employees/${employeeId}/history`);
         const historyRecords = await response.json();
         
         tbody.innerHTML = '';
@@ -71,10 +74,10 @@ async function showEmployeeHistory(employeeHistoryModal, matricula) {
             noHistoryMessage.classList.add('hidden');
             historyRecords.forEach(r => {
                 const statusClass = r.status === 'Devolvido' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-                // CORREÇÃO DE DATA APLICADA AQUI
+                // CORREÇÃO 2: Garantir que a formatação da data seja segura.
                 tbody.innerHTML += `
                     <tr class="border-b">
-                        <td class="p-3">${r.deviceModel} / ${r.deviceImei}</td>
+                        <td class="p-3">${r.deviceModel || 'N/A'}</td>
                         <td class="p-3">${formatDateForInput(r.deliveryDate)}</td>
                         <td class="p-3">${r.returnDate ? formatDateForInput(r.returnDate) : '---'}</td>
                         <td class="p-3"><span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${r.status}</span></td>
@@ -116,20 +119,19 @@ export function initEmployeesModule() {
     if (employeeForm) {
         employeeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const matricula = document.getElementById('employeeFormId').value;
-            const isEditing = !!document.getElementById('employee-id-input').value;
+            const employeeId = document.getElementById('employee-id-input').value;
+            const isEditing = !!employeeId;
             
             const employeeData = {
                 name: document.getElementById('employeeFormName').value,
+                id: document.getElementById('employeeFormId').value, // matricula
                 position: document.getElementById('employeeFormPosition').value,
                 email: document.getElementById('employeeFormEmail').value,
                 currentUser: state.currentUser
             };
-            if (!isEditing) {
-                employeeData.id = matricula;
-            }
 
-            const url = isEditing ? `${API_URL}/api/employees/${matricula}` : `${API_URL}/api/employees/`;
+            // A rota de PUT espera o ID numérico, não a matrícula
+            const url = isEditing ? `${API_URL}/api/employees/${employeeId}` : `${API_URL}/api/employees/`;
             const method = isEditing ? 'PUT' : 'POST';
 
             try {
@@ -151,15 +153,17 @@ export function initEmployeesModule() {
         employeeTableBody.addEventListener('click', async (e) => {
             const button = e.target.closest('button[data-action]');
             if (!button) return;
-            const matricula = button.dataset.id;
+            const employeeId = parseInt(button.dataset.id, 10);
+            const matricula = button.dataset.matricula; // Obter a matrícula do atributo data-*
             const action = button.dataset.action;
 
             if (action === 'edit-employee') {
-                openEmployeeForm(employeeForm, employeeFormModal, matricula);
+                openEmployeeForm(employeeForm, employeeFormModal, employeeId);
             } else if (action === 'delete-employee') {
-                if (!confirm(`Tem certeza que deseja excluir o funcionário de matrícula ${matricula}?`)) return;
+                const employee = state.employees.find(e => e.id === employeeId);
+                if (!confirm(`Tem certeza que deseja excluir o funcionário ${employee?.name || ''}?`)) return;
                 try {
-                    const response = await fetch(`${API_URL}/api/employees/${matricula}`, { 
+                    const response = await fetch(`${API_URL}/api/employees/${employeeId}`, { 
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ currentUser: state.currentUser })
@@ -167,13 +171,14 @@ export function initEmployeesModule() {
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
                     showToast(result.message);
-                    await fetchAllData();
-                    renderEmployeeTable(employeeTableBody, noEmployeesMessage);
+                    const updatedEmployees = await fetchData('employees');
+                    updateState({ employees: updatedEmployees });
+                    renderEmployeeTable(employeeTableBody, noEmployeesMessage, updatedEmployees);
                 } catch (error) {
                     showToast(`Erro: ${error.message}`, true);
                 }
             } else if (action === 'history-employee') {
-                showEmployeeHistory(employeeHistoryModal, matricula);
+                showEmployeeHistory(employeeHistoryModal, employeeId, matricula);
             }
         });
     }
@@ -182,8 +187,8 @@ export function initEmployeesModule() {
         employeeSearchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase().trim();
             const filteredEmployees = state.employees.filter(employee =>
-                employee.name.toLowerCase().includes(searchTerm) ||
-                String(employee.id).toLowerCase().includes(searchTerm)
+                (employee.name && employee.name.toLowerCase().includes(searchTerm)) ||
+                (employee.matricula && String(employee.matricula).toLowerCase().includes(searchTerm))
             );
             renderEmployeeTable(employeeTableBody, noEmployeesMessage, filteredEmployees);
         });
@@ -199,7 +204,7 @@ export function initEmployeesModule() {
             const csvContent = state.employees.map(emp => {
                 const name = `"${(emp.name || '').replace(/"/g, '""')}"`;
                 const position = `"${(emp.position || '').replace(/"/g, '""')}"`;
-                return `${emp.id},${name},${position},${emp.email || ''}`;
+                return `${emp.matricula},${name},${position},${emp.email || ''}`;
             }).join('\n');
             
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
