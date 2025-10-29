@@ -15,8 +15,7 @@ def get_employees():
         if not g.db_cursor:
             return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
         
-        # CORREÇÃO DEFINITIVA: Evitar nomes de coluna duplicados.
-        # O frontend usará 'matricula' para o valor e exibição, e o backend usará 'id' para joins.
+        # Versão estável e correta da consulta
         g.db_cursor.execute("SELECT id, nome AS name, matricula, cargo AS position, email FROM funcionarios ORDER BY nome")
         employees = g.db_cursor.fetchall()
         return jsonify(employees)

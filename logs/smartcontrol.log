@@ -343,3 +343,7 @@ werkzeug.exceptions.UnsupportedMediaType: 415 Unsupported Media Type: Did not at
 2025-10-28 17:47:46,998 INFO: Login bem-sucedido para o utilizador: admin [in D:\APP\smartcontrol\routes\auth_routes.py:62]
 2025-10-28 17:55:46,433 INFO: SMARTCONTROL startup [in D:\APP\smartcontrol\app.py:55]
 2025-10-28 17:55:46,469 INFO: Iniciando servidor em modo DEBUG=True [in D:\APP\smartcontrol\app.py:127]
+2025-10-28 17:57:14,881 INFO: SMARTCONTROL startup [in D:\APP\smartcontrol\app.py:55]
+2025-10-28 17:57:14,914 INFO: Iniciando servidor em modo DEBUG=True [in D:\APP\smartcontrol\app.py:127]
+2025-10-28 17:59:56,632 INFO: SMARTCONTROL startup [in D:\APP\smartcontrol\app.py:55]
+2025-10-28 17:59:56,672 INFO: Iniciando servidor em modo DEBUG=True [in D:\APP\smartcontrol\app.py:127]

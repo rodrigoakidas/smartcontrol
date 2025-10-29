@@ -1,8 +1,9 @@
 // --- MÓDULO DE LINHAS (LINES.JS) ---
 
-import { state, fetchAllData } from '../app.js';
+import { state, updateState, fetchData } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 import { API_URL } from './api.js';
+import { refreshDashboard } from './dashboard.js';
 
 function renderLineTable(lineTableBody, noLinesMessage, linesToRender = state.lines) {
     if (!lineTableBody || !noLinesMessage) return;
@@ -13,9 +14,9 @@ function renderLineTable(lineTableBody, noLinesMessage, linesToRender = state.li
         return;
     }
     noLinesMessage.classList.add('hidden');
-    linesToRender.forEach(line => {
+    const rowsHtml = linesToRender.map(line => {
         const statusClass = { 'Ativa': 'bg-green-100 text-green-800', 'Inativa': 'bg-yellow-100 text-yellow-800', 'Cancelada': 'bg-red-100 text-red-800' }[line.status] || 'bg-gray-100';
-        lineTableBody.innerHTML += `
+        return `
             <tr class="border-b">
                 <td class="p-3">${line.numero}</td>
                 <td class="p-3">${line.operadora}</td>
@@ -28,8 +29,10 @@ function renderLineTable(lineTableBody, noLinesMessage, linesToRender = state.li
                     <button data-action="delete-line" data-id="${line.id}" class="text-red-600 p-2" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </td>
             </tr>`;
-    });
-    if(window.lucide) lucide.createIcons();
+    }).join('');
+
+    lineTableBody.innerHTML = rowsHtml;
+    if (window.lucide) lucide.createIcons();
 }
 
 function openLineForm(lineForm, lineFormModal, lineId = null) {
@@ -133,9 +136,13 @@ export function initLinesModule() {
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.message);
                 showToast(result.message);
-                await fetchAllData();
-                renderLineTable(lineTableBody, noLinesMessage);
+
+                // Otimização: Recarrega apenas os dados de linhas e o dashboard.
+                const updatedLines = await fetchData('lines');
+                updateState({ lines: updatedLines });
+                await refreshDashboard();
                 closeModal(lineFormModal);
+                renderLineTable(lineTableBody, noLinesMessage, updatedLines);
             } catch (error) {
                 showToast(`Erro: ${error.message}`, true);
             }
@@ -165,8 +172,12 @@ export function initLinesModule() {
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast(result.message);
-                    await fetchAllData();
-                    renderLineTable(lineTableBody, noLinesMessage);
+
+                    // Otimização
+                    const updatedLines = await fetchData('lines');
+                    updateState({ lines: updatedLines });
+                    await refreshDashboard();
+                    renderLineTable(lineTableBody, noLinesMessage, updatedLines);
                 } catch (error) {
                     showToast(`Erro: ${error.message}`, true);
                 }
@@ -254,4 +265,3 @@ export function initLinesModule() {
     }
 
 }
-

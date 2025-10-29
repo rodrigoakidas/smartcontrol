@@ -83,8 +83,7 @@ def get_record_by_id(record_id):
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
              
-        sql = """
-            SELECT r.*, f.matricula AS employeeMatricula, a.imei1 AS deviceImei,
+        sql = """SELECT r.*, f.matricula AS employeeMatricula, a.imei1 AS deviceImei,
                    a.modelo AS deviceModel, l.numero AS deviceLine
             FROM registros r
             JOIN funcionarios f ON r.funcionario_id = f.id
@@ -92,7 +91,7 @@ def get_record_by_id(record_id):
             LEFT JOIN linhas l ON a.linha_id = l.id
             WHERE r.id = %s
         """
-        g.db_cursor.execute(sql, (record_id,))
+        g.db_cursor.execute(sql, (record_id, ))
         record = g.db_cursor.fetchone()
         if not record:
             return jsonify({'message': 'Registro não encontrado'}), 404

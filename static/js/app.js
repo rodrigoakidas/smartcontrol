@@ -62,7 +62,8 @@ export function updateState(newState) {
 }
 
 function displayCompanyInfoOnHeader() {
-    const { nome, cnpj, logo } = state.companyInfo;
+    const companyInfo = state.companyInfo || {};
+    const { nome, cnpj, logo } = companyInfo;
     const headerName = document.getElementById('header-company-name');
     const headerCnpj = document.getElementById('header-company-cnpj');
     const logoEl = document.getElementById('header-logo');

@@ -1,6 +1,6 @@
 // --- MÓDULO DE DADOS DA EMPRESA (COMPANY.JS) ---
 
-import { state, fetchAllData } from '../app.js';
+import { state, updateState, fetchData } from '../app.js';
 import { openModal, closeModal, showToast, readFileAsBase64 } from './ui.js';
 import { API_URL } from './api.js';
 
@@ -53,21 +53,18 @@ export function initCompanyModule() {
     if (companyInfoForm) {
         companyInfoForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
             const logoSrc = logoPreview ? logoPreview.src : '';
-            let logoParaEnviar = null;
-
-            if (logoSrc && logoSrc.startsWith('data:image')) {
-                logoParaEnviar = logoSrc;
-            }
+            const logoToSend = (logoSrc && logoSrc.startsWith('data:image')) ? logoSrc : null;
 
             const companyData = {
                 nome: document.getElementById('companyName').value,
                 cnpj: document.getElementById('companyCnpj').value,
-                logo: logoParaEnviar
+                logo: logoToSend
             };
 
             try {
-                const response = await fetch(`${API_URL}/api/company/`, {
+                const response = await fetch(`${API_URL}/api/company`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(companyData)
@@ -75,11 +72,13 @@ export function initCompanyModule() {
                 
                 const result = await response.json();
                 if (!response.ok) {
-                    throw new Error(result.message);
+                    throw new Error(result.message || 'Falha ao atualizar os dados da empresa');
                 }
 
                 showToast(result.message);
-                await fetchAllData();
+                
+                const updatedCompanyInfo = await fetchData('company');
+                updateState({ companyInfo: updatedCompanyInfo || {} });
                 closeModal(companyInfoModal);
 
             } catch (error) {

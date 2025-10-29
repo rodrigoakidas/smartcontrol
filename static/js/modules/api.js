@@ -4,17 +4,29 @@ import { showToast } from './ui.js';
 export const API_URL = 'http://127.0.0.1:5000';
 
 export async function fetchData(endpoint) {
-    const fullUrl = `${API_URL}/api/${endpoint}`; 
+    const fullUrl = `${API_URL}/api/${endpoint}`;
     try {
         const response = await fetch(fullUrl);
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({ message: `Falha ao carregar ${endpoint}` }));
             throw new Error(errorBody.message);
         }
-        return await response.json();
+
+        // A resposta está OK, mas o corpo pode estar vazio ou não ser JSON
+        try {
+            // Tenta clonar a resposta para ler como texto primeiro, pois o corpo só pode ser lido uma vez
+            const responseText = await response.clone().text();
+            if (!responseText) {
+                return endpoint === 'company' ? {} : [];
+            }
+            return await response.json();
+        } catch (jsonError) {
+            console.error(`Erro de análise JSON para o endpoint ${endpoint}:`, jsonError);
+            return endpoint === 'company' ? {} : [];
+        }
     } catch (error) {
         showToast(error.message, true);
-        return []; 
+        return endpoint === 'company' ? {} : [];
     }
 }
 

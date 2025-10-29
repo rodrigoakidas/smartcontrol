@@ -1,10 +1,10 @@
 // --- MÓDULO DE FUNCIONÁRIOS (EMPLOYEES.JS) ---
-// (VERSÃO CORRIGIDA COM IMPORT CERTO)
+// (VERSÃO ESTÁVEL E CORRIGIDA)
 
-import { state, fetchAllData } from '../app.js';
-// CORREÇÃO: 'formatDateForInput' foi movido para a importação de 'ui.js'
+import { state, updateState, fetchData } from '../app.js';
 import { openModal, closeModal, showToast, formatDateForInput } from './ui.js';
 import { API_URL } from './api.js';
+import { refreshDashboard } from './dashboard.js';
 
 function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToRender = state.employees) {
     employeeTableBody.innerHTML = '';
@@ -14,8 +14,8 @@ function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToR
     }
     noEmployeesMessage.classList.add('hidden');
     
-    employeesToRender.forEach(employee => {
-        employeeTableBody.innerHTML += `
+    const rowsHtml = employeesToRender.map(employee => {
+        return `
             <tr class="border-b">
                 <td class="p-3">${employee.name || 'N/A'}</td>
                 <td class="p-3">${employee.matricula || 'N/A'}</td>
@@ -26,7 +26,9 @@ function renderEmployeeTable(employeeTableBody, noEmployeesMessage, employeesToR
                     <button data-action="delete-employee" data-id="${employee.id}" class="text-red-600 p-2" title="Excluir"><i data-lucide="trash-2"></i></button>
                 </td>
             </tr>`;
-    });
+    }).join('');
+
+    employeeTableBody.innerHTML = rowsHtml;
     if (window.lucide) lucide.createIcons();
 }
 
@@ -56,7 +58,6 @@ async function showEmployeeHistory(employeeHistoryModal, employeeId, matricula) 
     const employee = state.employees.find(e => e.id === employeeId);
     if (!employee) return;
 
-    // CORREÇÃO 1: Exibir a matrícula correta em vez do ID numérico.
     document.getElementById('history-employee-name').textContent = `${employee.name} (Matrícula: ${employee.matricula})`;
     const tbody = document.getElementById('employee-history-table-body');
     const noHistoryMessage = document.getElementById('no-history-message');
@@ -74,7 +75,6 @@ async function showEmployeeHistory(employeeHistoryModal, employeeId, matricula) 
             noHistoryMessage.classList.add('hidden');
             historyRecords.forEach(r => {
                 const statusClass = r.status === 'Devolvido' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800';
-                // CORREÇÃO 2: Garantir que a formatação da data seja segura.
                 tbody.innerHTML += `
                     <tr class="border-b">
                         <td class="p-3">${r.deviceModel || 'N/A'}</td>
@@ -123,14 +123,14 @@ export function initEmployeesModule() {
             const isEditing = !!employeeId;
             
             const employeeData = {
-                name: document.getElementById('employeeFormName').value,
-                id: document.getElementById('employeeFormId').value, // matricula
-                position: document.getElementById('employeeFormPosition').value,
-                email: document.getElementById('employeeFormEmail').value,
+                name: document.getElementById('employeeFormName').value.trim(),
+                id: document.getElementById('employeeFormId').value.trim(), // Este é o campo da matrícula
+                position: document.getElementById('employeeFormPosition').value.trim(),
+                email: document.getElementById('employeeFormEmail').value.trim(),
                 currentUser: state.currentUser
             };
 
-            // A rota de PUT espera o ID numérico, não a matrícula
+            // A rota PUT espera o ID numérico na URL
             const url = isEditing ? `${API_URL}/api/employees/${employeeId}` : `${API_URL}/api/employees/`;
             const method = isEditing ? 'PUT' : 'POST';
 
@@ -140,8 +140,12 @@ export function initEmployeesModule() {
                 if (!response.ok) throw new Error(result.message);
                 
                 showToast(result.message);
-                await fetchAllData();
-                renderEmployeeTable(employeeTableBody, noEmployeesMessage);
+                
+                // Otimização: Recarrega apenas os dados de funcionários e o dashboard.
+                const updatedEmployees = await fetchData('employees');
+                updateState({ employees: updatedEmployees });
+                await refreshDashboard();
+                renderEmployeeTable(employeeTableBody, noEmployeesMessage, updatedEmployees);
                 closeModal(employeeFormModal);
             } catch (error) {
                 showToast(`Erro: ${error.message}`, true);
@@ -171,8 +175,11 @@ export function initEmployeesModule() {
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
                     showToast(result.message);
+
+                    // Otimização
                     const updatedEmployees = await fetchData('employees');
                     updateState({ employees: updatedEmployees });
+                    await refreshDashboard();
                     renderEmployeeTable(employeeTableBody, noEmployeesMessage, updatedEmployees);
                 } catch (error) {
                     showToast(`Erro: ${error.message}`, true);
@@ -204,7 +211,7 @@ export function initEmployeesModule() {
             const csvContent = state.employees.map(emp => {
                 const name = `"${(emp.name || '').replace(/"/g, '""')}"`;
                 const position = `"${(emp.position || '').replace(/"/g, '""')}"`;
-                return `${emp.matricula},${name},${position},${emp.email || ''}`;
+                return `${emp.matricula || ''},${name},${position},${emp.email || ''}`;
             }).join('\n');
             
             const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
@@ -216,7 +223,6 @@ export function initEmployeesModule() {
         });
     }
 
-    // --- LÓGICA DE IMPORTAÇÃO DE CSV ATIVADA ---
     if (employeeImportInput) {
         employeeImportInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -242,8 +248,11 @@ export function initEmployeesModule() {
                     showToast(`${result.failures.length} registos não puderam ser importados. Verifique a consola.`, true);
                 }
 
-                await fetchAllData();
-                renderEmployeeTable(employeeTableBody, noEmployeesMessage);
+                // Otimização
+                const updatedEmployees = await fetchData('employees');
+                updateState({ employees: updatedEmployees });
+                await refreshDashboard();
+                renderEmployeeTable(employeeTableBody, noEmployeesMessage, updatedEmployees);
             } catch (error) {
                 showToast(`Erro na importação: ${error.message}`, true);
             } finally {

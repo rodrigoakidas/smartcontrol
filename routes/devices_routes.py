@@ -16,8 +16,7 @@ def get_devices():
         if not g.db_cursor:
              return jsonify({'message': 'Erro interno: Falha na conexão com a base de dados'}), 500
              
-        # CORREÇÃO: Simplificando a query para usar o status da tabela 'aparelhos' como fonte da verdade.
-        # Isso evita inconsistências e simplifica a lógica.
+        # Versão estável e correta da consulta
         sql = """
             SELECT 
                 a.id, a.modelo AS model, a.imei1, a.imei2, 
@@ -28,14 +27,6 @@ def get_devices():
         """
         g.db_cursor.execute(sql)
         devices = g.db_cursor.fetchall()
-        
-        # Debug log
-        current_app.logger.info(f"📱 Aparelhos retornados: {len(devices)}")
-        status_count = {}
-        for d in devices:
-            status_count[d['status']] = status_count.get(d['status'], 0) + 1
-        current_app.logger.info(f"📊 Status: {status_count}")
-        
         return jsonify(devices)
     except Exception as e:
         current_app.logger.error(f"Erro ao buscar aparelhos: {e}", exc_info=True)
@@ -101,7 +92,7 @@ def update_device(imei):
         g.db_cursor.execute("SELECT * FROM aparelhos WHERE imei1 = %s", (imei, ))
         old_data = g.db_cursor.fetchone()
 
-        # CORREÇÃO: A query de UPDATE estava faltando o parâmetro do IMEI no final.
+        # Query de UPDATE corrigida
         g.db_cursor.execute( 
             "UPDATE aparelhos SET modelo = %s, imei2 = %s, condicao = %s, observacoes = %s, linha_id = %s WHERE imei1 = %s",
             (modelo, imei2, condicao, observacoes, linha_id if linha_id else None, imei)

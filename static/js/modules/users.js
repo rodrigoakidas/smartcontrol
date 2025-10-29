@@ -1,6 +1,6 @@
 // --- MÓDULO DE UTILIZADORES (USERS.JS) ---
 
-import { state, fetchAllData } from '../app.js';
+import { state, updateState, fetchData } from '../app.js';
 import { openModal, closeModal, showToast, setLoading, unsetLoading } from './ui.js';
 import { API_URL } from './api.js';
 
@@ -135,8 +135,11 @@ export function initUsersModule() {
                 const result = await res.json();
                 if (!res.ok) throw new Error(result.message);
                 showToast(result.message);
-                await fetchAllData();
-                renderUserTable(userTableBody);
+
+                // Otimização
+                const updatedUsers = await fetchData('users');
+                updateState({ users: updatedUsers });
+                renderUserTable(userTableBody, updatedUsers);
                 closeModal(userFormModal);
             } catch (error) { 
                 showToast(`Erro: ${error.message}`, true); 
@@ -166,8 +169,11 @@ export function initUsersModule() {
                     const result = await res.json();
                     if (!res.ok) throw new Error(result.message);
                     showToast(result.message);
-                    await fetchAllData();
-                    renderUserTable(userTableBody);
+
+                    // Otimização
+                    const updatedUsers = await fetchData('users');
+                    updateState({ users: updatedUsers });
+                    renderUserTable(userTableBody, updatedUsers);
                 } catch (error) { 
                     showToast(`Erro: ${error.message}`, true); 
                 }
